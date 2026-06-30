@@ -67,3 +67,7 @@ curl -X POST https://127.0.0.1:8443/v1/messages \
     "messages": [{"role": "user", "content": "Hello"}]
   }'
 ```
+
+## License
+
+MIT
