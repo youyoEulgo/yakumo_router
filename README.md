@@ -54,7 +54,7 @@ sudo update-ca-trust extract
 cargo run
 ```
 
-服务监听 `https://127.0.0.1:8443`。
+服务监听 `https://127.0.0.1:<PORT>`（有证书时），否则退化为 `http://127.0.0.1:<PORT>`。
 
 ### 4. 测试
 

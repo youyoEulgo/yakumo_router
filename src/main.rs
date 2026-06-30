@@ -54,8 +54,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Arc::new(AppConfig::from_env());
 
-    let tls_config = RustlsConfig::from_pem_file("cert.pem", "key.pem").await?;
-
     let client = Client::builder()
         .danger_accept_invalid_certs(false)
         .build()?;
@@ -66,11 +64,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state((client, config));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    println!("[{}] HTTPS proxy listening on https://{}", ts(), addr);
 
-    axum_server::bind_rustls(addr, tls_config)
-        .serve(app.into_make_service())
-        .await?;
+    let has_cert = std::path::Path::new("cert.pem").exists()
+        && std::path::Path::new("key.pem").exists();
+
+    if has_cert {
+        let tls_config = RustlsConfig::from_pem_file("cert.pem", "key.pem").await?;
+        println!("[{}] HTTPS proxy listening on https://{}", ts(), addr);
+        axum_server::bind_rustls(addr, tls_config)
+            .serve(app.into_make_service())
+            .await?;
+    } else {
+        println!("[{}] HTTP proxy listening on http://{} (no cert, skipping TLS)", ts(), addr);
+        let listener = tokio::net::TcpListener::bind(addr).await?;
+        axum::serve(listener, app).await?;
+    }
 
     Ok(())
 }
