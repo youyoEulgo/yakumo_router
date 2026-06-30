@@ -1033,21 +1033,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "reverse_proxy"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-server",
- "bytes",
- "dotenvy",
- "futures",
- "reqwest",
- "serde_json",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "ring"
 version = "0.17.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1950,6 +1935,21 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
+
+[[package]]
+name = "yakumo_switch"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "axum-server",
+ "bytes",
+ "dotenvy",
+ "futures",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+]
 
 [[package]]
 name = "yoke"

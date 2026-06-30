@@ -9,7 +9,6 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const PROXY_PORT: u16 = 8443;
 const DEBUG_MOD: bool = false;
 
 struct AppConfig {
@@ -18,6 +17,7 @@ struct AppConfig {
     model_opus: String,
     model_sonnet: String,
     model_haiku: String,
+    port: u16,
 }
 
 impl AppConfig {
@@ -29,6 +29,10 @@ impl AppConfig {
             model_opus: std::env::var("MODEL_OPUS").expect("MODEL_OPUS not set"),
             model_sonnet: std::env::var("MODEL_SONNET").expect("MODEL_SONNET not set"),
             model_haiku: std::env::var("MODEL_HAIKU").expect("MODEL_HAIKU not set"),
+            port: std::env::var("PROXY_PORT")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(8443),
         }
     }
 }
@@ -56,11 +60,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .danger_accept_invalid_certs(false)
         .build()?;
 
+    let port = config.port;
     let app = Router::new()
         .route("/{*path}", any(proxy_handler))
         .with_state((client, config));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], PROXY_PORT));
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     println!("[{}] HTTPS proxy listening on https://{}", ts(), addr);
 
     axum_server::bind_rustls(addr, tls_config)

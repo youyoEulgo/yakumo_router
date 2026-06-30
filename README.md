@@ -1,4 +1,4 @@
-# Provider Switch
+# Yakumo Switch
 
 通用 Anthropic API 兼容反向代理 — 将 Anthropic 模型请求自动路由至任意上游服务。
 
@@ -22,6 +22,7 @@ cp .env.example .env
 | `MODEL_OPUS` | 请求中包含 "opus" 时替换为的模型名 |
 | `MODEL_SONNET` | 请求中包含 "sonnet" 时替换为的模型名 |
 | `MODEL_HAIKU` | 请求中包含 "haiku" 时替换为的模型名 |
+| `PROXY_PORT` | 监听端口，默认 `8443` |
 
 ### 2. 生成 & 信任 TLS 证书
 
@@ -39,11 +40,11 @@ sudo security add-trusted-cert -d -r trustRoot \
   -k /Library/Keychains/System.keychain cert.pem
 
 # --- Linux (Debian/Ubuntu 等) ---
-sudo cp cert.pem /usr/local/share/ca-certificates/provider-switch.crt
+sudo cp cert.pem /usr/local/share/ca-certificates/yakumo-switch.crt
 sudo update-ca-certificates
 
 # --- Linux (Fedora/CentOS/RHEL 等) ---
-sudo cp cert.pem /etc/pki/ca-trust/source/anchors/provider-switch.crt
+sudo cp cert.pem /etc/pki/ca-trust/source/anchors/yakumo-switch.crt
 sudo update-ca-trust extract
 ```
 
