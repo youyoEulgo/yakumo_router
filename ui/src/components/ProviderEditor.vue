@@ -13,6 +13,7 @@ defineProps<{
     api_key: string;
   };
   providerRoutes: RouteRule[];
+  routeEditorOpen: boolean;
   routeForm: RouteRule;
   savingProvider: boolean;
   savingRoute: boolean;
@@ -184,7 +185,7 @@ function updateForwardOnly(event: Event): void {
         </template>
       </div>
 
-      <form class="form-grid" @submit.prevent="emit('saveRoute')">
+      <form v-if="routeEditorOpen" class="form-grid" @submit.prevent="emit('saveRoute')">
         <label>
           <span>ID</span>
           <input

@@ -1,9 +1,9 @@
-# Yakumo Switch
+# Yakumo Router
 
 OpenAI-compatible / Anthropic-compatible API reverse proxy with configurable
 model routing.
 
-Yakumo Switch reads the request protocol, matches the request model name against
+Yakumo Router reads the request protocol, matches the request model name against
 the corresponding route table, rewrites the model when a route matches, and
 forwards the request to the selected provider.
 
@@ -26,9 +26,9 @@ The file is written to the user data directory:
 
 | OS | Directory |
 |----|-----------|
-| Linux / BSD | `~/.local/share/yakumo_switch/` or `$XDG_DATA_HOME/yakumo_switch/` |
-| macOS | `~/Library/Application Support/yakumo_switch/` |
-| Windows | `%APPDATA%\yakumo_switch\` |
+| Linux / BSD | `~/.local/share/yakumo_router/` or `$XDG_DATA_HOME/yakumo_router/` |
+| macOS | `~/Library/Application Support/yakumo_router/` |
+| Windows | `%APPDATA%\yakumo_router\` |
 
 `cert.pem` and `key.pem` are also read from this directory by default.
 
@@ -173,14 +173,14 @@ Generate a local certificate into the data directory:
 
 ```bash
 openssl req -x509 -newkey rsa:2048 -nodes \
-  -keyout ~/.local/share/yakumo_switch/key.pem \
-  -out ~/.local/share/yakumo_switch/cert.pem \
+  -keyout ~/.local/share/yakumo_router/key.pem \
+  -out ~/.local/share/yakumo_router/cert.pem \
   -days 365 \
   -subj "/CN=localhost" \
   -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
 ```
 
-When both `cert.pem` and `key.pem` exist, Yakumo Switch listens with HTTPS.
+When both `cert.pem` and `key.pem` exist, Yakumo Router listens with HTTPS.
 Otherwise it falls back to HTTP.
 
 ## Run
@@ -190,7 +190,7 @@ cargo run
 ```
 
 If `config.toml` does not exist yet, the program exits with a message asking you
-to run `yakumo_switch init` first.
+to run `yakumo init` first.
 
 Default listener:
 

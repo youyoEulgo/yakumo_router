@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
-const APP_DIR_NAME: &str = "yakumo_switch";
+const APP_DIR_NAME: &str = "yakumo_router";
 const CONFIG_FILE_NAME: &str = "config.toml";
 const DEFAULT_CONFIG: &str = r#"active_route_table = "default"
 
@@ -24,11 +24,11 @@ api_key = "sk-your-openrouter-key"
 
 [[openai.routes]]
 id = "openai-gpt"
-match = "gpt"
-match_type = "contains"
+match = ".*"
+match_type = "regex"
 provider = "openrouter"
 model = "openai/gpt-4.1"
-forward_only = false
+forward_only = true
 
 [anthropic.providers.deepseek]
 base_url = "https://api.deepseek.com/anthropic"
@@ -42,17 +42,9 @@ provider = "deepseek"
 model = "deepseek-v4-pro"
 forward_only = false
 
-[[anthropic.routes]]
-id = "anthropic-haiku"
-match = "haiku"
-match_type = "contains"
-provider = "deepseek"
-model = "deepseek-v4-flash"
-forward_only = false
-
 [route_tables.default]
 openai = ["openai-gpt"]
-anthropic = ["anthropic-sonnet", "anthropic-haiku"]
+anthropic = ["anthropic-sonnet"]
 "#;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

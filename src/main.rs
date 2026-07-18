@@ -67,7 +67,7 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
     let config_path = config_path(&data_dir);
     if !config_path.exists() {
         return Err(format!(
-            "config not found at {}; run `yakumo_switch init` first",
+            "config not found at {}; run `yakumo init` first",
             config_path.display()
         )
         .into());
@@ -145,11 +145,11 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
 }
 
 fn print_help(data_dir: &std::path::Path) {
-    println!("Yakumo Switch");
+    println!("Yakumo Router");
     println!();
     println!("Usage:");
-    println!("  yakumo_switch init    Create config.toml template");
-    println!("  yakumo_switch         Run proxy server");
+    println!("  yakumo init    Create config.toml template");
+    println!("  yakumo         Run proxy server");
     println!();
     println!("Config directory:");
     println!("  {}", data_dir.display());

@@ -113,6 +113,7 @@ function onRouteToggle(protocol: Protocol, routeId: string, event: Event): void 
               <label class="switch-row">
                 <input
                   type="checkbox"
+                  :disabled="saving"
                   :checked="routeEnabled(routeTable, protocol, route.id)"
                   @change="onRouteToggle(protocol, route.id, $event)"
                 />
@@ -130,7 +131,7 @@ function onRouteToggle(protocol: Protocol, routeId: string, event: Event): void 
                 <button
                   type="button"
                   class="ghost-button compact"
-                  :disabled="!routeEnabled(routeTable, protocol, route.id)"
+                  :disabled="saving || !routeEnabled(routeTable, protocol, route.id)"
                   title="Move up"
                   aria-label="Move up"
                   @click="emit('moveRoute', protocol, route.id, -1)"
@@ -140,7 +141,7 @@ function onRouteToggle(protocol: Protocol, routeId: string, event: Event): void 
                 <button
                   type="button"
                   class="ghost-button compact"
-                  :disabled="!routeEnabled(routeTable, protocol, route.id)"
+                  :disabled="saving || !routeEnabled(routeTable, protocol, route.id)"
                   title="Move down"
                   aria-label="Move down"
                   @click="emit('moveRoute', protocol, route.id, 1)"

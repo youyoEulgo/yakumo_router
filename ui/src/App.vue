@@ -44,6 +44,7 @@ const selectedProvider = ref('');
 const selectedRouteId = ref('');
 const selectedRouteTable = ref('');
 const routeTableName = ref('');
+const routeEditorOpen = ref(false);
 const draftRouteTable = reactive<RouteTable>({
   openai: [],
   anthropic: [],
@@ -152,7 +153,25 @@ function clearRouteTableSelection(): void {
   draftRouteTable.anthropic = [];
 }
 
-function toggleRouteInTable(protocol: Protocol, routeId: string, enabled: boolean): void {
+async function persistSelectedRouteTableChange(): Promise<void> {
+  if (!selectedRouteTable.value || !selectedTable.value) {
+    return;
+  }
+
+  savingRouteTable.value = true;
+  errorMessage.value = "";
+
+  try {
+    await saveRouteTableApi(selectedRouteTable.value, selectedTable.value);
+    setStatus("Route table saved.");
+  } catch (error) {
+    setError(error instanceof Error ? error.message : "Failed to save route table.");
+  } finally {
+    savingRouteTable.value = false;
+  }
+}
+
+async function toggleRouteInTable(protocol: Protocol, routeId: string, enabled: boolean): Promise<void> {
   if (!selectedTable.value) {
     return;
   }
@@ -163,10 +182,14 @@ function toggleRouteInTable(protocol: Protocol, routeId: string, enabled: boolea
     ids.push(routeId);
   } else if (!enabled && index !== -1) {
     ids.splice(index, 1);
+  } else {
+    return;
   }
+
+  await persistSelectedRouteTableChange();
 }
 
-function moveRouteInTable(protocol: Protocol, routeId: string, direction: -1 | 1): void {
+async function moveRouteInTable(protocol: Protocol, routeId: string, direction: -1 | 1): Promise<void> {
   if (!selectedTable.value) {
     return;
   }
@@ -180,6 +203,7 @@ function moveRouteInTable(protocol: Protocol, routeId: string, direction: -1 | 1
 
   ids.splice(index, 1);
   ids.splice(nextIndex, 0, routeId);
+  await persistSelectedRouteTableChange();
 }
 
 function applyRoute(route: RouteRule): void {
@@ -190,6 +214,7 @@ function applyRoute(route: RouteRule): void {
   routeForm.model = route.model;
   routeForm.forward_only = route.forward_only ?? false;
   selectedRouteId.value = route.id;
+  routeEditorOpen.value = true;
 }
 
 function resetRouteForm(): void {
@@ -200,6 +225,12 @@ function resetRouteForm(): void {
   routeForm.model = '';
   routeForm.forward_only = false;
   selectedRouteId.value = '';
+  routeEditorOpen.value = false;
+}
+
+function startNewRoute(): void {
+  resetRouteForm();
+  routeEditorOpen.value = true;
 }
 
 function updateProviderField(field: 'name' | 'base_url' | 'api_key', value: string): void {
@@ -397,7 +428,7 @@ onMounted(() => {
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <h1>Yakumo Switch</h1>
+        <h1>Yakumo Router</h1>
         <p>Manage providers and their model routing rules.</p>
       </div>
       <button class="ghost-button" type="button" :disabled="loading" @click="loadAll">
@@ -421,10 +452,10 @@ onMounted(() => {
         <ProviderEditor v-else v-model:show-api-key="showApiKey" :active-protocol="activeProtocol"
           :deleting-provider="deletingProvider" :is-editing-provider="isEditingProvider"
           :is-editing-route="isEditingRoute" :provider-form="providerForm" :provider-routes="providerRoutes"
-          :route-form="routeForm" :saving-provider="savingProvider" :saving-route="savingRoute"
+          :route-editor-open="routeEditorOpen" :route-form="routeForm" :saving-provider="savingProvider" :saving-route="savingRoute"
           :selected-provider="selectedProvider" :selected-route-id="selectedRouteId" @save-provider="saveProvider"
           @update-provider-field="updateProviderField" @update-route-field="updateRouteField"
-          @delete-provider="deleteSelectedProvider" @reset-route="resetRouteForm" @select-route="applyRoute"
+          @delete-provider="deleteSelectedProvider" @reset-route="startNewRoute" @select-route="applyRoute"
           @save-route="saveRoute" @delete-route="deleteSelectedRoute" />
 
         <StatusBar :error="errorMessage" :status="statusMessage" />
