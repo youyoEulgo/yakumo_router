@@ -35,34 +35,137 @@ The file is written to the user data directory:
 See `config.example.toml` for the same template.
 
 ```toml
-[openai]
-default_provider = "openrouter"
+active_route_table = "default"
 
 [openai.providers.openrouter]
 base_url = "https://openrouter.ai/api/v1"
 api_key = "sk-your-openrouter-key"
 
 [[openai.routes]]
+id = "openai-gpt"
 match = "gpt"
+match_type = "contains"
 provider = "openrouter"
 model = "openai/gpt-4.1"
-
-[anthropic]
-default_provider = "deepseek"
+forward_only = false
 
 [anthropic.providers.deepseek]
 base_url = "https://api.deepseek.com/anthropic"
 api_key = "sk-your-deepseek-key"
 
 [[anthropic.routes]]
+id = "anthropic-sonnet"
 match = "sonnet"
+match_type = "contains"
 provider = "deepseek"
 model = "deepseek-v4-pro"
+forward_only = false
+
+[route_tables.default]
+openai = ["openai-gpt"]
+anthropic = ["anthropic-sonnet"]
 ```
 
-Route matching is currently case-insensitive substring matching. If no route
-matches, the request is forwarded to the protocol's `default_provider` without
-rewriting the model.
+Route matching is case-insensitive. `match_type = "contains"` checks whether the
+request model contains `match`; `match_type = "exact"` requires the full model
+name to match; `match_type = "regex"` treats `match` as a regular expression.
+If `forward_only = true`, the request is routed to the selected provider without
+rewriting the model. If no route matches, the request returns `400 Bad Request`.
+Only one route table is active at a time. Rules in the active table are checked
+in order; once one rule matches, later rules are skipped. Route tables store rule
+IDs, not full rule definitions.
+
+`config.toml` is watched at runtime. Provider, API key, and route changes are
+reloaded automatically after the file is saved. Listener settings such as
+`server.host`, `server.port`, and the active TLS/plain HTTP mode still require a
+restart.
+
+## Route API
+
+List all providers:
+
+```bash
+curl http://127.0.0.1:8989/_ui/api/providers
+```
+
+Create or update a provider by name:
+
+```bash
+curl -X PUT http://127.0.0.1:8989/_ui/api/providers/openai/openrouter \
+  -H "Content-Type: application/json" \
+  -d '{
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key": "sk-your-openrouter-key"
+  }'
+```
+
+Delete a provider:
+
+```bash
+curl -X DELETE http://127.0.0.1:8989/_ui/api/providers/openai/openrouter
+```
+
+Deleting a provider also deletes all rules that reference it.
+
+List all rules:
+
+```bash
+curl http://127.0.0.1:8989/_ui/api/routes
+```
+
+Create or update a rule by `id`:
+
+```bash
+curl -X PUT http://127.0.0.1:8989/_ui/api/routes/openai \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "openai-gpt",
+    "match": "gpt",
+    "match_type": "contains",
+    "provider": "openrouter",
+    "model": "openai/gpt-4.1",
+    "forward_only": false
+  }'
+```
+
+Use `/_ui/api/routes/anthropic` for Anthropic-compatible rules. If the `id`
+already exists in that protocol's route table, it is updated; otherwise a new
+rule is appended.
+
+Delete a rule:
+
+```bash
+curl -X DELETE http://127.0.0.1:8989/_ui/api/routes/openai/openai-gpt
+```
+
+List route tables:
+
+```bash
+curl http://127.0.0.1:8989/_ui/api/route-tables
+```
+
+Create or update a route table:
+
+```bash
+curl -X PUT http://127.0.0.1:8989/_ui/api/route-tables/default \
+  -H "Content-Type: application/json" \
+  -d '{
+    "openai": ["openai-gpt"],
+    "anthropic": ["anthropic-sonnet", "anthropic-haiku"]
+  }'
+```
+
+Activate one route table:
+
+```bash
+curl -X PUT http://127.0.0.1:8989/_ui/api/active-route-table/default
+```
+
+Delete a route table:
+
+```bash
+curl -X DELETE http://127.0.0.1:8989/_ui/api/route-tables/default
+```
 
 ## TLS
 

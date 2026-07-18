@@ -3,3 +3,36 @@
 cert.pem
 key.pem
 .env
+
+# Frontend logs
+ui/logs
+ui/*.log
+ui/npm-debug.log*
+ui/yarn-debug.log*
+ui/yarn-error.log*
+ui/pnpm-debug.log*
+ui/lerna-debug.log*
+
+# Frontend dependencies and build output
+ui/node_modules
+ui/dist
+ui/dist-ssr
+ui/coverage
+ui/*.local
+ui/*.tsbuildinfo
+ui/.eslintcache
+
+# Frontend editor files
+ui/.vscode/
+ui/.idea
+ui/*.suo
+ui/*.ntvs*
+ui/*.njsproj
+ui/*.sln
+ui/*.sw?
+
+# Frontend test and Vite artifacts
+ui/cypress/videos/
+ui/cypress/screenshots/
+ui/__screenshots__/
+ui/*.timestamp-*-*.mjs
