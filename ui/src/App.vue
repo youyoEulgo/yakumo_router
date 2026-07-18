@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import {
   activateRouteTable as activateRouteTableApi,
   deleteProvider as deleteProviderApi,
@@ -24,6 +24,7 @@ import type {
   RouteTable,
   RouteTableState,
 } from './types';
+import { protocolLabels } from './types';
 
 const providers = reactive<ProviderTables>({
   openai: {},
@@ -59,6 +60,8 @@ const deletingRouteTable = ref(false);
 const showApiKey = ref(false);
 const statusMessage = ref('');
 const errorMessage = ref('');
+const toastKey = ref(0);
+let toastTimer: ReturnType<typeof window.setTimeout> | undefined;
 
 const providerForm = reactive({
   name: '',
@@ -89,15 +92,56 @@ const isEditingProvider = computed(() => Boolean(selectedProvider.value));
 const isEditingRoute = computed(() => {
   return providerRoutes.value.some((route) => route.id === routeForm.id);
 });
+const totalProviders = computed(() => {
+  return Object.keys(providers.openai).length + Object.keys(providers.anthropic).length;
+});
+const totalRoutes = computed(() => {
+  return routes.openai.length + routes.anthropic.length;
+});
+const totalRouteTables = computed(() => {
+  return Object.keys(routeTableState.tables).length;
+});
+const topbarContext = computed(() => {
+  if (activePane.value === 'route-table') {
+    return selectedRouteTable.value ? `Route table / ${selectedRouteTable.value}` : 'Route table / new';
+  }
+
+  const provider = selectedProvider.value || 'new provider';
+  return `${protocolLabels[activeProtocol.value]} / ${provider}`;
+});
 
 function setStatus(message: string): void {
   statusMessage.value = message;
   errorMessage.value = '';
+  toastKey.value += 1;
+  scheduleToastDismiss();
 }
 
 function setError(message: string): void {
   errorMessage.value = message;
   statusMessage.value = '';
+  toastKey.value += 1;
+  scheduleToastDismiss();
+}
+
+function clearToast(): void {
+  statusMessage.value = '';
+  errorMessage.value = '';
+  if (toastTimer) {
+    window.clearTimeout(toastTimer);
+    toastTimer = undefined;
+  }
+}
+
+function scheduleToastDismiss(): void {
+  if (toastTimer) {
+    window.clearTimeout(toastTimer);
+  }
+  toastTimer = window.setTimeout(() => {
+    statusMessage.value = '';
+    errorMessage.value = '';
+    toastTimer = undefined;
+  }, 3200);
 }
 
 function applyProvider(name: string, provider: ProviderConfig): void {
@@ -116,8 +160,7 @@ function resetProviderForm(): void {
   providerForm.base_url = '';
   providerForm.api_key = '';
   resetRouteForm();
-  statusMessage.value = '';
-  errorMessage.value = '';
+  clearToast();
 }
 
 function selectNewProvider(protocol: Protocol): void {
@@ -142,8 +185,7 @@ function resetRouteTableForm(): void {
   routeTableName.value = '';
   draftRouteTable.openai = [];
   draftRouteTable.anthropic = [];
-  statusMessage.value = '';
-  errorMessage.value = '';
+  clearToast();
 }
 
 function clearRouteTableSelection(): void {
@@ -422,18 +464,71 @@ async function activateRouteTable(): Promise<void> {
 onMounted(() => {
   void loadAll();
 });
+
+onBeforeUnmount(() => {
+  if (toastTimer) {
+    window.clearTimeout(toastTimer);
+  }
+});
 </script>
 
 <template>
   <main class="app-shell">
     <header class="topbar">
-      <div>
-        <h1>Yakumo Router</h1>
-        <p>Manage providers and their model routing rules.</p>
+      <div class="topbar-title">
+        <span class="app-mark" aria-hidden="true">Y</span>
+        <div>
+          <h1>Yakumo Router</h1>
+          <p>{{ topbarContext }}</p>
+        </div>
       </div>
-      <button class="ghost-button" type="button" :disabled="loading" @click="loadAll">
-        Refresh
-      </button>
+      <div class="topbar-actions">
+        <div class="topbar-stats" aria-label="Configuration summary">
+          <span class="stat-pill active-route-pill">
+            <span class="stat-label">Active</span>
+            <strong>{{ routeTableState.active ?? 'None' }}</strong>
+          </span>
+          <span class="stat-pill">
+            <strong>{{ totalProviders }}</strong>
+            <span class="stat-label">Providers</span>
+          </span>
+          <span class="stat-pill">
+            <strong>{{ totalRoutes }}</strong>
+            <span class="stat-label">Rules</span>
+          </span>
+          <span class="stat-pill">
+            <strong>{{ totalRouteTables }}</strong>
+            <span class="stat-label">Tables</span>
+          </span>
+        </div>
+        <button
+          class="icon-button refresh-button"
+          type="button"
+          :disabled="loading"
+          :aria-label="loading ? 'Refreshing' : 'Refresh'"
+          :title="loading ? 'Refreshing' : 'Refresh'"
+          @click="loadAll"
+        >
+          <svg class="button-icon" :class="{ spinning: loading }" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M20 11a8 8 0 0 0-14.7-4.4L4 8"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M4 4v4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M4 13a8 8 0 0 0 14.7 4.4L20 16"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
     </header>
 
     <section class="workspace">
@@ -452,13 +547,13 @@ onMounted(() => {
         <ProviderEditor v-else v-model:show-api-key="showApiKey" :active-protocol="activeProtocol"
           :deleting-provider="deletingProvider" :is-editing-provider="isEditingProvider"
           :is-editing-route="isEditingRoute" :provider-form="providerForm" :provider-routes="providerRoutes"
-          :route-editor-open="routeEditorOpen" :route-form="routeForm" :saving-provider="savingProvider" :saving-route="savingRoute"
-          :selected-provider="selectedProvider" :selected-route-id="selectedRouteId" @save-provider="saveProvider"
-          @update-provider-field="updateProviderField" @update-route-field="updateRouteField"
-          @delete-provider="deleteSelectedProvider" @reset-route="startNewRoute" @select-route="applyRoute"
-          @save-route="saveRoute" @delete-route="deleteSelectedRoute" />
+          :route-editor-open="routeEditorOpen" :route-form="routeForm" :saving-provider="savingProvider"
+          :saving-route="savingRoute" :selected-provider="selectedProvider" :selected-route-id="selectedRouteId"
+          @save-provider="saveProvider" @update-provider-field="updateProviderField"
+          @update-route-field="updateRouteField" @delete-provider="deleteSelectedProvider" @reset-route="startNewRoute"
+          @select-route="applyRoute" @save-route="saveRoute" @delete-route="deleteSelectedRoute" />
 
-        <StatusBar :error="errorMessage" :status="statusMessage" />
+        <StatusBar :key="toastKey" :error="errorMessage" :status="statusMessage" />
       </section>
     </section>
   </main>
