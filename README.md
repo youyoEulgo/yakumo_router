@@ -1,72 +1,101 @@
 # Yakumo Switch
 
-通用 Anthropic API 兼容反向代理 — 将 Anthropic 模型请求自动路由至任意上游服务。
+OpenAI-compatible / Anthropic-compatible API reverse proxy with configurable
+model routing.
 
-请求中的模型名根据 **opus / sonnet / haiku** 关键字匹配，替换为 `.env` 中配置的上游模型名。
+Yakumo Switch reads the request protocol, matches the request model name against
+the corresponding route table, rewrites the model when a route matches, and
+forwards the request to the selected provider.
 
-## 快速开始
+It does not convert protocols:
 
-### 1. 配置
-
-```bash
-cp .env.example .env
-# 编辑 .env，填入上游地址、API Key、模型映射
+```text
+OpenAI request    -> OpenAI-compatible provider
+Anthropic request -> Anthropic-compatible provider
 ```
 
-`.env` 字段说明：
+## Config
 
-| 变量 | 含义 |
-|------|------|
-| `UPSTREAM_BASE_URL` | 上游 Anthropic-compatible API 地址 |
-| `API_KEY` | 上游 API Key |
-| `MODEL_OPUS` | 请求中包含 "opus" 时替换为的模型名 |
-| `MODEL_SONNET` | 请求中包含 "sonnet" 时替换为的模型名 |
-| `MODEL_HAIKU` | 请求中包含 "haiku" 时替换为的模型名 |
-| `PROXY_PORT` | 监听端口，默认 `8443` |
-
-### 2. 生成 & 信任 TLS 证书
+Create the initial `config.toml` with:
 
 ```bash
-# step 1: 生成自签名证书 (所有平台通用)
+cargo run -- init
+```
+
+The file is written to the user data directory:
+
+| OS | Directory |
+|----|-----------|
+| Linux / BSD | `~/.local/share/yakumo_switch/` or `$XDG_DATA_HOME/yakumo_switch/` |
+| macOS | `~/Library/Application Support/yakumo_switch/` |
+| Windows | `%APPDATA%\yakumo_switch\` |
+
+`cert.pem` and `key.pem` are also read from this directory by default.
+
+See `config.example.toml` for the same template.
+
+```toml
+[openai]
+default_provider = "openrouter"
+
+[openai.providers.openrouter]
+base_url = "https://openrouter.ai/api/v1"
+api_key = "sk-your-openrouter-key"
+
+[[openai.routes]]
+match = "gpt"
+provider = "openrouter"
+model = "openai/gpt-4.1"
+
+[anthropic]
+default_provider = "deepseek"
+
+[anthropic.providers.deepseek]
+base_url = "https://api.deepseek.com/anthropic"
+api_key = "sk-your-deepseek-key"
+
+[[anthropic.routes]]
+match = "sonnet"
+provider = "deepseek"
+model = "deepseek-v4-pro"
+```
+
+Route matching is currently case-insensitive substring matching. If no route
+matches, the request is forwarded to the protocol's `default_provider` without
+rewriting the model.
+
+## TLS
+
+Generate a local certificate into the data directory:
+
+```bash
 openssl req -x509 -newkey rsa:2048 -nodes \
-  -keyout key.pem -out cert.pem -days 365 \
+  -keyout ~/.local/share/yakumo_switch/key.pem \
+  -out ~/.local/share/yakumo_switch/cert.pem \
+  -days 365 \
   -subj "/CN=localhost" \
   -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
-
-# step 2: 信任证书 (按平台选择)
-
-# --- macOS ---
-sudo security add-trusted-cert -d -r trustRoot \
-  -k /Library/Keychains/System.keychain cert.pem
-
-# --- Linux (Debian/Ubuntu 等) ---
-sudo cp cert.pem /usr/local/share/ca-certificates/yakumo-switch.crt
-sudo update-ca-certificates
-
-# --- Linux (Fedora/CentOS/RHEL 等) ---
-sudo cp cert.pem /etc/pki/ca-trust/source/anchors/yakumo-switch.crt
-sudo update-ca-trust extract
 ```
 
-### 3. 运行
+When both `cert.pem` and `key.pem` exist, Yakumo Switch listens with HTTPS.
+Otherwise it falls back to HTTP.
+
+## Run
 
 ```bash
 cargo run
 ```
 
-服务监听 `https://127.0.0.1:<PORT>`（有证书时），否则退化为 `http://127.0.0.1:<PORT>`。
+If `config.toml` does not exist yet, the program exits with a message asking you
+to run `yakumo_switch init` first.
 
-### 4. 测试
+Default listener:
 
-```bash
-curl -X POST https://127.0.0.1:8443/v1/messages \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "claude-sonnet-4-5",
-    "stream": false,
-    "messages": [{"role": "user", "content": "Hello"}]
-  }'
+```text
+https://127.0.0.1:8443
 ```
+
+or HTTP on the same address when no certificate is found.
 
 ## License
 

@@ -1,0 +1,36 @@
+[server]
+host = "127.0.0.1"
+port = 8443
+
+[tls]
+cert = "cert.pem"
+key = "key.pem"
+
+[openai]
+default_provider = "openrouter"
+
+[openai.providers.openrouter]
+base_url = "https://openrouter.ai/api/v1"
+api_key = "sk-your-openrouter-key"
+
+[[openai.routes]]
+match = "gpt"
+provider = "openrouter"
+model = "openai/gpt-4.1"
+
+[anthropic]
+default_provider = "deepseek"
+
+[anthropic.providers.deepseek]
+base_url = "https://api.deepseek.com/anthropic"
+api_key = "sk-your-deepseek-key"
+
+[[anthropic.routes]]
+match = "sonnet"
+provider = "deepseek"
+model = "deepseek-v4-pro"
+
+[[anthropic.routes]]
+match = "haiku"
+provider = "deepseek"
+model = "deepseek-v4-flash"
