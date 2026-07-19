@@ -33,8 +33,7 @@ body {
   min-height: 100vh;
   color: var(--text);
   background:
-    linear-gradient(180deg, rgba(18, 24, 38, 0.035), rgba(18, 24, 38, 0) 220px),
-    var(--bg);
+    linear-gradient(180deg, rgba(18, 24, 38, 0.035), rgba(18, 24, 38, 0) 220px), var(--bg);
   font-family:
     Inter,
     ui-sans-serif,
