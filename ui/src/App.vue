@@ -95,7 +95,13 @@ const {
           :title="loading ? 'Refreshing' : 'Refresh'"
           @click="loadAll"
         >
-          <svg class="button-icon" :class="{ spinning: loading }" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+          <svg
+            class="button-icon"
+            :class="{ spinning: loading }"
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
             <path
               d="M20 11a8 8 0 0 0-14.7-4.4L4 8"
               stroke="currentColor"
@@ -103,7 +109,13 @@ const {
               stroke-linecap="round"
               stroke-linejoin="round"
             />
-            <path d="M4 4v4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M4 4v4h4"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
             <path
               d="M4 13a8 8 0 0 0 14.7 4.4L20 16"
               stroke="currentColor"
@@ -111,7 +123,13 @@ const {
               stroke-linecap="round"
               stroke-linejoin="round"
             />
-            <path d="M20 20v-4h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M20 20v-4h-4"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </button>
       </div>

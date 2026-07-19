@@ -30,10 +30,7 @@ export async function loadConfigState(): Promise<ConfigState> {
 
   const providers = await readJson<ProviderTables>(providersResponse, 'Providers request');
   const routes = await readJson<RouteTables>(routesResponse, 'Routes request');
-  const routeTables = await readJson<RouteTableState>(
-    routeTablesResponse,
-    'Route tables request',
-  );
+  const routeTables = await readJson<RouteTableState>(routeTablesResponse, 'Route tables request');
 
   return {
     providers: {
@@ -78,10 +75,7 @@ export async function deleteProvider(
   return readJson<DeleteProviderResult>(response, 'Provider delete');
 }
 
-export async function saveRoute(
-  protocol: Protocol,
-  route: RouteRule,
-): Promise<UpsertRouteResult> {
+export async function saveRoute(protocol: Protocol, route: RouteRule): Promise<UpsertRouteResult> {
   const response = await fetch(`/_ui/api/routes/${protocol}`, {
     method: 'PUT',
     headers: {

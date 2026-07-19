@@ -16,7 +16,11 @@ type RouteDragSortOptions = {
   moveRoute: (protocol: Protocol, routeId: string, direction: -1 | 1) => void;
 };
 
-export function useRouteDragSort({ canDragRoute, enabledRouteIds, moveRoute }: RouteDragSortOptions) {
+export function useRouteDragSort({
+  canDragRoute,
+  enabledRouteIds,
+  moveRoute,
+}: RouteDragSortOptions) {
   const draggingRoute = ref<RouteDragItem | null>(null);
   const dropTarget = ref<DropTarget | null>(null);
 

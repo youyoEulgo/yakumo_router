@@ -49,12 +49,20 @@ function enabledRouteIds(protocol: Protocol): string[] {
   return props.routeTable?.[protocol] ?? [];
 }
 
-const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, onDragStart, onDrop } =
-  useRouteDragSort({
-    canDragRoute: (protocol, routeId) => !props.saving && routeEnabled(props.routeTable, protocol, routeId),
-    enabledRouteIds,
-    moveRoute: (protocol, routeId, direction) => emit('moveRoute', protocol, routeId, direction),
-  });
+const {
+  clearDragState,
+  clearDropTarget,
+  dropPlacement,
+  isDragging,
+  onDragOver,
+  onDragStart,
+  onDrop,
+} = useRouteDragSort({
+  canDragRoute: (protocol, routeId) =>
+    !props.saving && routeEnabled(props.routeTable, protocol, routeId),
+  enabledRouteIds,
+  moveRoute: (protocol, routeId, direction) => emit('moveRoute', protocol, routeId, direction),
+});
 </script>
 
 <template>
@@ -68,9 +76,12 @@ const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, 
         </p>
         <p v-else>New route table</p>
       </div>
-      <button class="ghost-button compact" type="button"
+      <button
+        class="ghost-button compact"
+        type="button"
         :disabled="!selectedRouteTable || activeRouteTable === selectedRouteTable || activating"
-        @click="emit('activate')">
+        @click="emit('activate')"
+      >
         {{ activating ? 'Activating...' : 'Activate' }}
       </button>
     </div>
@@ -79,8 +90,13 @@ const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, 
       <form class="route-table-form" @submit.prevent="emit('save')">
         <label>
           <span>Name</span>
-          <input :value="routeTableName" required autocomplete="off" placeholder="default"
-            @input="emit('update:routeTableName', ($event.target as HTMLInputElement).value)" />
+          <input
+            :value="routeTableName"
+            required
+            autocomplete="off"
+            placeholder="default"
+            @input="emit('update:routeTableName', ($event.target as HTMLInputElement).value)"
+          />
         </label>
 
         <div class="actions">
@@ -93,24 +109,34 @@ const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, 
                 stroke-linejoin="round"
               />
               <path d="M8 4v6h8V4" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-              <path d="M8 20v-6h8v6" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+              <path
+                d="M8 20v-6h8v6"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linejoin="round"
+              />
             </svg>
             {{ saving ? 'Saving...' : 'Save' }}
           </button>
-          <button class="danger-button" type="button" :disabled="!selectedRouteTable || deleting"
-            @click="emit('delete')">
+          <button
+            class="danger-button"
+            type="button"
+            :disabled="!selectedRouteTable || deleting"
+            @click="emit('delete')"
+          >
             {{ deleting ? 'Deleting...' : 'Delete' }}
           </button>
         </div>
       </form>
 
       <div class="route-table-rules">
-        <section v-for="protocol in (['openai', 'anthropic'] as Protocol[])" :key="protocol"
-          class="route-table-section">
+        <section
+          v-for="protocol in ['openai', 'anthropic'] as Protocol[]"
+          :key="protocol"
+          class="route-table-section"
+        >
           <h3>{{ protocolLabels[protocol] }} Rules</h3>
-          <div v-if="routes[protocol].length === 0" class="empty-state">
-            No rules configured.
-          </div>
+          <div v-if="routes[protocol].length === 0" class="empty-state">No rules configured.</div>
           <div v-else class="route-toggle-list">
             <div
               v-for="route in orderedRoutes(routeTable, routes, protocol)"
@@ -142,8 +168,12 @@ const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, 
                 <span></span>
               </span>
               <label class="switch-row">
-                <input type="checkbox" :disabled="saving" :checked="routeEnabled(routeTable, protocol, route.id)"
-                  @change="onRouteToggle(protocol, route.id, $event)" />
+                <input
+                  type="checkbox"
+                  :disabled="saving"
+                  :checked="routeEnabled(routeTable, protocol, route.id)"
+                  @change="onRouteToggle(protocol, route.id, $event)"
+                />
                 <span class="switch-track" aria-hidden="true"></span>
                 <span class="route-toggle-text">
                   <strong>{{ route.id }}</strong>
@@ -155,14 +185,24 @@ const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, 
               </label>
 
               <div class="order-actions">
-                <button type="button" class="ghost-button compact"
-                  :disabled="saving || !routeEnabled(routeTable, protocol, route.id)" title="Move up"
-                  aria-label="Move up" @click="emit('moveRoute', protocol, route.id, -1)">
+                <button
+                  type="button"
+                  class="ghost-button compact"
+                  :disabled="saving || !routeEnabled(routeTable, protocol, route.id)"
+                  title="Move up"
+                  aria-label="Move up"
+                  @click="emit('moveRoute', protocol, route.id, -1)"
+                >
                   ↑
                 </button>
-                <button type="button" class="ghost-button compact"
-                  :disabled="saving || !routeEnabled(routeTable, protocol, route.id)" title="Move down"
-                  aria-label="Move down" @click="emit('moveRoute', protocol, route.id, 1)">
+                <button
+                  type="button"
+                  class="ghost-button compact"
+                  :disabled="saving || !routeEnabled(routeTable, protocol, route.id)"
+                  title="Move down"
+                  aria-label="Move down"
+                  @click="emit('moveRoute', protocol, route.id, 1)"
+                >
                   ↓
                 </button>
               </div>

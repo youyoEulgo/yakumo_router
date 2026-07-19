@@ -80,7 +80,9 @@ export function useRouterConfigEditor() {
     return activePane.value === 'route-table' ? draftRouteTable : undefined;
   });
   const providerRoutes = computed(() => {
-    return routes[activeProtocol.value].filter((route) => route.provider === selectedProvider.value);
+    return routes[activeProtocol.value].filter(
+      (route) => route.provider === selectedProvider.value,
+    );
   });
   const isEditingProvider = computed(() => Boolean(selectedProvider.value));
   const isEditingRoute = computed(() => {
@@ -97,7 +99,9 @@ export function useRouterConfigEditor() {
   });
   const topbarContext = computed(() => {
     if (activePane.value === 'route-table') {
-      return selectedRouteTable.value ? `Route table / ${selectedRouteTable.value}` : 'Route table / new';
+      return selectedRouteTable.value
+        ? `Route table / ${selectedRouteTable.value}`
+        : 'Route table / new';
     }
 
     const provider = selectedProvider.value || 'new provider';
@@ -173,7 +177,11 @@ export function useRouterConfigEditor() {
     }
   }
 
-  async function toggleRouteInTable(protocol: Protocol, routeId: string, enabled: boolean): Promise<void> {
+  async function toggleRouteInTable(
+    protocol: Protocol,
+    routeId: string,
+    enabled: boolean,
+  ): Promise<void> {
     if (!selectedTable.value) {
       return;
     }
@@ -191,7 +199,11 @@ export function useRouterConfigEditor() {
     await persistSelectedRouteTableChange();
   }
 
-  async function moveRouteInTable(protocol: Protocol, routeId: string, direction: -1 | 1): Promise<void> {
+  async function moveRouteInTable(
+    protocol: Protocol,
+    routeId: string,
+    direction: -1 | 1,
+  ): Promise<void> {
     if (!selectedTable.value) {
       return;
     }
