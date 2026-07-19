@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import './sidebar-nav-row.css';
 import type { ProviderConfig } from '../types';
 
 defineProps<{

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import './sidebar-nav-row.css';
+
 defineProps<{
   label: string;
 }>();
