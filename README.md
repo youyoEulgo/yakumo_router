@@ -32,7 +32,7 @@ The file is written to the user data directory:
 
 `cert.pem` and `key.pem` are also read from this directory by default.
 
-See `config.example.toml` for the same template.
+The generated template looks like this:
 
 ```toml
 active_route_table = "default"
@@ -195,7 +195,7 @@ to run `yakumo init` first.
 Default listener:
 
 ```text
-https://127.0.0.1:8443
+https://127.0.0.1:8989
 ```
 
 or HTTP on the same address when no certificate is found.

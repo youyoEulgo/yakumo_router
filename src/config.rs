@@ -78,6 +78,29 @@ impl Default for ServerConfig {
     }
 }
 
+impl Protocol {
+    pub fn config<'a>(&self, config: &'a AppConfig) -> &'a ProtocolConfig {
+        match self {
+            Protocol::OpenAi => &config.openai,
+            Protocol::Anthropic => &config.anthropic,
+        }
+    }
+
+    pub fn config_mut<'a>(&self, config: &'a mut AppConfig) -> &'a mut ProtocolConfig {
+        match self {
+            Protocol::OpenAi => &mut config.openai,
+            Protocol::Anthropic => &mut config.anthropic,
+        }
+    }
+
+    pub fn table_routes_mut<'a>(&self, table: &'a mut RouteTable) -> &'a mut Vec<String> {
+        match self {
+            Protocol::OpenAi => &mut table.openai,
+            Protocol::Anthropic => &mut table.anthropic,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TlsConfig {
     #[serde(default = "default_cert_file")]
@@ -273,10 +296,7 @@ pub fn remove_provider_route_ids(
     removed_ids: &[String],
 ) {
     for table in route_tables.values_mut() {
-        let route_ids = match protocol {
-            Protocol::OpenAi => &mut table.openai,
-            Protocol::Anthropic => &mut table.anthropic,
-        };
+        let route_ids = protocol.table_routes_mut(table);
         route_ids.retain(|route_id| !removed_ids.contains(route_id));
     }
 }
