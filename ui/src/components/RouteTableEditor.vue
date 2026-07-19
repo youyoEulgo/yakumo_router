@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouteDragSort } from '../composables/useRouteDragSort';
+import SaveIcon from './SaveIcon.vue';
 import type { Protocol, RouteRule, RouteTable } from '../types';
 import { protocolLabels } from '../types';
 
@@ -101,21 +102,7 @@ const {
 
         <div class="actions">
           <button class="primary-button" type="submit" :disabled="saving">
-            <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 4h12l2 2v14H5V4Z"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linejoin="round"
-              />
-              <path d="M8 4v6h8V4" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-              <path
-                d="M8 20v-6h8v6"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <SaveIcon />
             {{ saving ? 'Saving...' : 'Save' }}
           </button>
           <button
