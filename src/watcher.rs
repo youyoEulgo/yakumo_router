@@ -6,7 +6,14 @@ use tokio::sync::RwLock;
 
 pub fn spawn_config_watcher(config_path: PathBuf, config: Arc<RwLock<AppConfig>>) {
     tokio::spawn(async move {
-        let watch_path = config_path.clone();
+        let watch_path = if config_path.exists() {
+            config_path.clone()
+        } else {
+            match config_path.parent() {
+                Some(parent) => parent.to_path_buf(),
+                None => config_path.clone(),
+            }
+        };
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
         let mut watcher =
             match notify::recommended_watcher(move |result: notify::Result<notify::Event>| {
@@ -26,7 +33,8 @@ pub fn spawn_config_watcher(config_path: PathBuf, config: Arc<RwLock<AppConfig>>
 
         while let Some(event) = rx.recv().await {
             match event {
-                Ok(event) if is_reload_event(&event.kind) => match load_config(&config_path) {
+                Ok(event) if should_reload(&event, &config_path) => match load_config(&config_path)
+                {
                     Ok(new_config) => {
                         *config.write().await = new_config;
                         println!(
@@ -44,6 +52,10 @@ pub fn spawn_config_watcher(config_path: PathBuf, config: Arc<RwLock<AppConfig>>
             }
         }
     });
+}
+
+fn should_reload(event: &notify::Event, config_path: &PathBuf) -> bool {
+    is_reload_event(&event.kind) && event.paths.iter().any(|path| path == config_path)
 }
 
 fn is_reload_event(kind: &EventKind) -> bool {

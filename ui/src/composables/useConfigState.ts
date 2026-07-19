@@ -1,5 +1,5 @@
 import { computed, reactive, ref } from 'vue';
-import { loadConfigState } from '../api';
+import { createConfigFile, loadConfigState } from '../api';
 import type { ProviderTables, RouteTables, RouteTableState } from '../types';
 
 type ConfigStateOptions = {
@@ -21,6 +21,8 @@ export function useConfigState({ onError, t }: ConfigStateOptions) {
     tables: {},
   });
   const loading = ref(false);
+  const creatingConfig = ref(false);
+  const configExists = ref(true);
 
   const totalProviders = computed(() => {
     return Object.keys(providers.openai).length + Object.keys(providers.anthropic).length;
@@ -37,6 +39,7 @@ export function useConfigState({ onError, t }: ConfigStateOptions) {
 
     try {
       const state = await loadConfigState();
+      configExists.value = state.configExists;
       providers.openai = state.providers.openai;
       providers.anthropic = state.providers.anthropic;
       routes.openai = state.routes.openai;
@@ -50,7 +53,24 @@ export function useConfigState({ onError, t }: ConfigStateOptions) {
     }
   }
 
+  async function createConfig(): Promise<void> {
+    creatingConfig.value = true;
+
+    try {
+      await createConfigFile();
+      configExists.value = true;
+      await loadAll();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : t('failedCreateConfig'));
+    } finally {
+      creatingConfig.value = false;
+    }
+  }
+
   return {
+    configExists,
+    createConfig,
+    creatingConfig,
     loadAll,
     loading,
     providers,

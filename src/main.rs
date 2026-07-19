@@ -4,14 +4,15 @@ mod ui;
 mod watcher;
 
 use crate::config::{
-    AppConfig, BoxError, config_path, data_dir, init_config, load_config, resolve_config_path,
+    AppConfig, BoxError, config_path, data_dir, init_config, load_or_default_config,
+    resolve_config_path,
 };
 use crate::proxy::proxy_handler;
 use crate::ui::{
-    activate_route_table_handler, delete_provider_handler, delete_route_handler,
-    delete_route_table_handler, list_providers_handler, list_route_tables_handler,
-    list_routes_handler, ui_asset_handler, ui_index_handler, upsert_provider_handler,
-    upsert_route_handler, upsert_route_table_handler,
+    activate_route_table_handler, create_config_handler, delete_provider_handler,
+    delete_route_handler, delete_route_table_handler, get_config_status_handler,
+    list_providers_handler, list_route_tables_handler, list_routes_handler, ui_asset_handler,
+    ui_index_handler, upsert_provider_handler, upsert_route_handler, upsert_route_table_handler,
 };
 use crate::watcher::spawn_config_watcher;
 use axum::{
@@ -64,16 +65,11 @@ async fn main() -> Result<(), BoxError> {
 }
 
 async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
-    let config_path = config_path(&data_dir);
-    if !config_path.exists() {
-        return Err(format!(
-            "config not found at {}; run `yakumo init` first",
-            config_path.display()
-        )
-        .into());
-    }
+    std::fs::create_dir_all(&data_dir)?;
 
-    let config = load_config(&config_path)?;
+    let config_path = config_path(&data_dir);
+    let config_exists = config_path.exists();
+    let config = load_or_default_config(&config_path)?;
     let config = Arc::new(RwLock::new(config));
 
     let client = Client::builder()
@@ -105,6 +101,10 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
             "/_ui/api/active-route-table/{name}",
             put(activate_route_table_handler),
         )
+        .route(
+            "/_ui/api/config",
+            get(get_config_status_handler).post(create_config_handler),
+        )
         .route("/_ui/api/routes", get(list_routes_handler))
         .route("/_ui/api/routes/{protocol}", put(upsert_route_handler))
         .route(
@@ -121,7 +121,15 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
 
     let has_cert = cert_path.exists() && key_path.exists();
 
-    println!("[{}] Config loaded from {}", ts(), config_path.display());
+    if config_exists {
+        println!("[{}] Config loaded from {}", ts(), config_path.display());
+    } else {
+        println!(
+            "[{}] Config not found at {}; starting with an empty in-memory config",
+            ts(),
+            config_path.display()
+        );
+    }
     if has_cert {
         let tls_config = RustlsConfig::from_pem_file(&cert_path, &key_path).await?;
         println!("[{}] HTTPS proxy listening on https://{}", ts(), addr);

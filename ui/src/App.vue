@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppTopbar from './components/AppTopbar.vue';
+import MissingConfigPanel from './components/MissingConfigPanel.vue';
 import ProviderEditor from './components/ProviderEditor.vue';
 import RouteTableEditor from './components/RouteTableEditor.vue';
 import SidebarNav from './components/SidebarNav.vue';
@@ -14,6 +15,9 @@ const {
   activatingRouteTable,
   activePane,
   activeProtocol,
+  configExists,
+  createConfig,
+  creatingConfig,
   deleteSelectedProvider,
   deleteSelectedRoute,
   deleteSelectedRouteTable,
@@ -105,6 +109,18 @@ const {
       />
 
       <section class="editor">
+        <MissingConfigPanel
+          v-if="!configExists"
+          :creating="creatingConfig"
+          :messages="{
+            action: t('createConfig'),
+            creating: t('creatingConfig'),
+            detail: t('missingConfigDetail'),
+            title: t('missingConfigTitle'),
+          }"
+          @create="createConfig"
+        />
+
         <RouteTableEditor
           v-if="activePane === 'route-table'"
           v-model:route-table-name="routeTableName"

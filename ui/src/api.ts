@@ -1,5 +1,6 @@
 import type {
   ConfigState,
+  ConfigFileStatus,
   DeleteProviderResult,
   DeleteRouteResult,
   ProviderConfig,
@@ -22,17 +23,21 @@ async function readJson<T>(response: Response, label: string): Promise<T> {
 }
 
 export async function loadConfigState(): Promise<ConfigState> {
-  const [providersResponse, routesResponse, routeTablesResponse] = await Promise.all([
-    fetch('/_ui/api/providers'),
-    fetch('/_ui/api/routes'),
-    fetch('/_ui/api/route-tables'),
-  ]);
+  const [configResponse, providersResponse, routesResponse, routeTablesResponse] =
+    await Promise.all([
+      fetch('/_ui/api/config'),
+      fetch('/_ui/api/providers'),
+      fetch('/_ui/api/routes'),
+      fetch('/_ui/api/route-tables'),
+    ]);
 
+  const configStatus = await readJson<ConfigFileStatus>(configResponse, 'Config status request');
   const providers = await readJson<ProviderTables>(providersResponse, 'Providers request');
   const routes = await readJson<RouteTables>(routesResponse, 'Routes request');
   const routeTables = await readJson<RouteTableState>(routeTablesResponse, 'Route tables request');
 
   return {
+    configExists: configStatus.exists,
     providers: {
       openai: providers.openai ?? {},
       anthropic: providers.anthropic ?? {},
@@ -46,6 +51,14 @@ export async function loadConfigState(): Promise<ConfigState> {
       tables: routeTables.tables ?? {},
     },
   };
+}
+
+export async function createConfigFile(): Promise<void> {
+  const response = await fetch('/_ui/api/config', {
+    method: 'POST',
+  });
+
+  await readJson(response, 'Config creation');
 }
 
 export async function saveProvider(

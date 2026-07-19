@@ -9,12 +9,27 @@ pub struct AppConfig {
     pub server: ServerConfig,
     #[serde(default)]
     pub tls: TlsConfig,
+    #[serde(default)]
     pub openai: ProtocolConfig,
+    #[serde(default)]
     pub anthropic: ProtocolConfig,
     #[serde(default)]
     pub active_route_table: Option<String>,
     #[serde(default)]
     pub route_tables: HashMap<String, RouteTable>,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            server: ServerConfig::default(),
+            tls: TlsConfig::default(),
+            openai: ProtocolConfig::default(),
+            anthropic: ProtocolConfig::default(),
+            active_route_table: None,
+            route_tables: HashMap::new(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -56,6 +71,15 @@ pub struct ProtocolConfig {
     pub providers: HashMap<String, ProviderConfig>,
     #[serde(default)]
     pub routes: Vec<RouteRule>,
+}
+
+impl Default for ProtocolConfig {
+    fn default() -> Self {
+        Self {
+            providers: HashMap::new(),
+            routes: Vec::new(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -142,7 +166,7 @@ fn default_key_file() -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::AppConfig;
-    use crate::config::storage::DEFAULT_CONFIG;
+    use crate::config::storage::{DEFAULT_CONFIG, MINIMAL_CONFIG};
 
     #[test]
     fn default_config_has_active_route_table_at_root() {
@@ -150,5 +174,17 @@ mod tests {
 
         assert_eq!(config.active_route_table.as_deref(), Some("default"));
         assert!(config.route_tables.contains_key("default"));
+    }
+
+    #[test]
+    fn minimal_config_defaults_routes_and_providers() {
+        let config: AppConfig = toml::from_str(MINIMAL_CONFIG).expect("minimal config parses");
+
+        assert!(config.openai.providers.is_empty());
+        assert!(config.openai.routes.is_empty());
+        assert!(config.anthropic.providers.is_empty());
+        assert!(config.anthropic.routes.is_empty());
+        assert!(config.route_tables.is_empty());
+        assert_eq!(config.active_route_table, None);
     }
 }

@@ -46,6 +46,15 @@ openai = ["openai-gpt"]
 anthropic = ["anthropic-sonnet"]
 "#;
 
+pub const MINIMAL_CONFIG: &str = r#"[server]
+host = "127.0.0.1"
+port = 8989
+
+[tls]
+cert = "cert.pem"
+key = "key.pem"
+"#;
+
 pub fn config_path(data_dir: &Path) -> PathBuf {
     data_dir.join(CONFIG_FILE_NAME)
 }
@@ -53,6 +62,14 @@ pub fn config_path(data_dir: &Path) -> PathBuf {
 pub fn load_config(config_path: &Path) -> Result<AppConfig, BoxError> {
     let config_text = fs::read_to_string(config_path)?;
     Ok(toml::from_str(&config_text)?)
+}
+
+pub fn load_or_default_config(config_path: &Path) -> Result<AppConfig, BoxError> {
+    if config_path.exists() {
+        load_config(config_path)
+    } else {
+        Ok(AppConfig::default())
+    }
 }
 
 pub fn init_config(data_dir: PathBuf) -> Result<(), BoxError> {
@@ -79,6 +96,16 @@ pub fn init_config(data_dir: PathBuf) -> Result<(), BoxError> {
         crate::ts()
     );
     Ok(())
+}
+
+pub fn create_minimal_config(data_dir: &Path) -> Result<AppConfig, BoxError> {
+    fs::create_dir_all(data_dir)?;
+
+    let config_path = config_path(data_dir);
+    let config = AppConfig::default();
+    let minimal_text = MINIMAL_CONFIG;
+    fs::write(&config_path, minimal_text)?;
+    Ok(config)
 }
 
 pub fn data_dir() -> Result<PathBuf, BoxError> {

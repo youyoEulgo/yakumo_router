@@ -37,9 +37,14 @@ export interface RouteTableState {
 }
 
 export interface ConfigState {
+  configExists: boolean;
   providers: ProviderTables;
   routes: RouteTables;
   routeTables: RouteTableState;
+}
+
+export interface ConfigFileStatus {
+  exists: boolean;
 }
 
 export interface UpsertRouteResult {

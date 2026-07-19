@@ -1,17 +1,46 @@
 use crate::AppState;
 use crate::config::{
-    Protocol, ProviderConfig, RouteRule, RouteTable, delete_provider, delete_route,
-    delete_route_from_tables, remove_provider_route_ids, upsert_provider, upsert_route,
+    Protocol, ProviderConfig, RouteRule, RouteTable, create_minimal_config, delete_provider,
+    delete_route, delete_route_from_tables, remove_provider_route_ids, upsert_provider,
+    upsert_route,
 };
 use crate::proxy::parse_protocol;
 use crate::ui::dto::{
-    ActiveRouteTableResult, DeleteProviderResult, DeleteRouteResult, DeleteRouteTableResult,
-    ProviderTables, RouteTableList, RouteTables, UpsertProviderResult, UpsertRouteResult,
-    UpsertRouteTableResult,
+    ActiveRouteTableResult, ConfigFileStatus, CreateConfigResult, DeleteProviderResult,
+    DeleteRouteResult, DeleteRouteTableResult, ProviderTables, RouteTableList, RouteTables,
+    UpsertProviderResult, UpsertRouteResult, UpsertRouteTableResult,
 };
 use crate::ui::response::{json_response, read_json_body, save_config};
 use axum::{body::Body, extract::Path, extract::State, http::StatusCode, response::Response};
 use std::sync::Arc;
+
+pub async fn get_config_status_handler(
+    State(state): State<Arc<AppState>>,
+) -> Result<Response<Body>, StatusCode> {
+    let status = ConfigFileStatus {
+        exists: state.config_path.exists(),
+    };
+
+    json_response(&status, StatusCode::OK)
+}
+
+pub async fn create_config_handler(
+    State(state): State<Arc<AppState>>,
+) -> Result<Response<Body>, StatusCode> {
+    if state.config_path.exists() {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    let data_dir = state
+        .config_path
+        .parent()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+    let config = create_minimal_config(data_dir).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    *state.config.write().await = config;
+
+    let result = CreateConfigResult { created: true };
+    json_response(&result, StatusCode::OK)
+}
 
 pub async fn list_routes_handler(
     State(state): State<Arc<AppState>>,

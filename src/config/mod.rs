@@ -9,4 +9,7 @@ pub use mutations::{
 pub use schema::{
     AppConfig, MatchType, Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable,
 };
-pub use storage::{BoxError, config_path, data_dir, init_config, load_config, resolve_config_path};
+pub use storage::{
+    BoxError, config_path, create_minimal_config, data_dir, init_config, load_config,
+    load_or_default_config, resolve_config_path,
+};

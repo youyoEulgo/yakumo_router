@@ -60,3 +60,13 @@ pub struct UpsertRouteTableResult {
 pub struct ActiveRouteTableResult {
     pub active: Option<String>,
 }
+
+#[derive(Serialize)]
+pub struct ConfigFileStatus {
+    pub exists: bool,
+}
+
+#[derive(Serialize)]
+pub struct CreateConfigResult {
+    pub created: bool,
+}
