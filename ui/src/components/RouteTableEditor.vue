@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { useRouteDragSort } from '../composables/useRouteDragSort';
 import type { Protocol, RouteRule, RouteTable } from '../types';
 import { protocolLabels } from '../types';
 
@@ -22,9 +22,6 @@ const emit = defineEmits<{
   toggleRoute: [protocol: Protocol, routeId: string, enabled: boolean];
   moveRoute: [protocol: Protocol, routeId: string, direction: -1 | 1];
 }>();
-
-const draggingRoute = ref<{ protocol: Protocol; routeId: string } | null>(null);
-const dropTarget = ref<{ protocol: Protocol; routeId: string; placement: 'before' | 'after' } | null>(null);
 
 function routeEnabled(table: RouteTable | undefined, protocol: Protocol, routeId: string): boolean {
   return table?.[protocol].includes(routeId) ?? false;
@@ -52,86 +49,12 @@ function enabledRouteIds(protocol: Protocol): string[] {
   return props.routeTable?.[protocol] ?? [];
 }
 
-function onDragStart(protocol: Protocol, routeId: string, event: DragEvent): void {
-  if (props.saving || !routeEnabled(props.routeTable, protocol, routeId)) {
-    event.preventDefault();
-    return;
-  }
-
-  draggingRoute.value = { protocol, routeId };
-  event.dataTransfer?.setData('text/plain', routeId);
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-  }
-}
-
-function onDragOver(protocol: Protocol, routeId: string, event: DragEvent): void {
-  if (
-    !draggingRoute.value ||
-    draggingRoute.value.protocol !== protocol ||
-    draggingRoute.value.routeId === routeId ||
-    !routeEnabled(props.routeTable, protocol, routeId)
-  ) {
-    return;
-  }
-
-  event.preventDefault();
-  const target = event.currentTarget as HTMLElement;
-  const { top, height } = target.getBoundingClientRect();
-  const placement = event.clientY < top + height / 2 ? 'before' : 'after';
-  dropTarget.value = { protocol, routeId, placement };
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move';
-  }
-}
-
-function onDrop(protocol: Protocol, targetRouteId: string, event: DragEvent): void {
-  event.preventDefault();
-  const dragged = draggingRoute.value;
-  if (!dragged || dragged.protocol !== protocol || dragged.routeId === targetRouteId) {
-    clearDragState();
-    return;
-  }
-
-  const ids = enabledRouteIds(protocol);
-  const fromIndex = ids.indexOf(dragged.routeId);
-  const targetIndex = ids.indexOf(targetRouteId);
-  if (fromIndex === -1 || targetIndex === -1) {
-    clearDragState();
-    return;
-  }
-
-  const placement = dropTarget.value?.placement ?? 'before';
-  const toIndex = placement === 'before' ? targetIndex : targetIndex + 1;
-  const adjustedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
-  if (fromIndex === adjustedToIndex) {
-    clearDragState();
-    return;
-  }
-
-  const direction: -1 | 1 = fromIndex < adjustedToIndex ? 1 : -1;
-  for (let index = fromIndex; index !== adjustedToIndex; index += direction) {
-    emit('moveRoute', protocol, dragged.routeId, direction);
-  }
-  clearDragState();
-}
-
-function clearDragState(): void {
-  draggingRoute.value = null;
-  dropTarget.value = null;
-}
-
-function isDragging(protocol: Protocol, routeId: string): boolean {
-  return draggingRoute.value?.protocol === protocol && draggingRoute.value.routeId === routeId;
-}
-
-function dropPlacement(protocol: Protocol, routeId: string): 'before' | 'after' | null {
-  if (dropTarget.value?.protocol !== protocol || dropTarget.value.routeId !== routeId) {
-    return null;
-  }
-
-  return dropTarget.value.placement;
-}
+const { clearDragState, clearDropTarget, dropPlacement, isDragging, onDragOver, onDragStart, onDrop } =
+  useRouteDragSort({
+    canDragRoute: (protocol, routeId) => !props.saving && routeEnabled(props.routeTable, protocol, routeId),
+    enabledRouteIds,
+    moveRoute: (protocol, routeId, direction) => emit('moveRoute', protocol, routeId, direction),
+  });
 </script>
 
 <template>
@@ -202,7 +125,7 @@ function dropPlacement(protocol: Protocol, routeId: string): 'before' | 'after' 
               :draggable="routeEnabled(routeTable, protocol, route.id) && !saving"
               @dragstart="onDragStart(protocol, route.id, $event)"
               @dragover="onDragOver(protocol, route.id, $event)"
-              @dragleave="dropTarget = null"
+              @dragleave="clearDropTarget"
               @drop="onDrop(protocol, route.id, $event)"
               @dragend="clearDragState"
             >
