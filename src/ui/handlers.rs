@@ -1,32 +1,17 @@
 use crate::AppState;
 use crate::config::{
-    AppConfig, Protocol, ProviderConfig, RouteRule, RouteTable, delete_provider, delete_route,
+    Protocol, ProviderConfig, RouteRule, RouteTable, delete_provider, delete_route,
     delete_route_from_tables, remove_provider_route_ids, upsert_provider, upsert_route,
 };
 use crate::proxy::parse_protocol;
-use axum::{
-    body::Body,
-    extract::{Path, State},
-    http::{StatusCode, header},
-    response::Response,
+use crate::ui::dto::{
+    ActiveRouteTableResult, DeleteProviderResult, DeleteRouteResult, DeleteRouteTableResult,
+    ProviderTables, RouteTableList, RouteTables, UpsertProviderResult, UpsertRouteResult,
+    UpsertRouteTableResult,
 };
-use rust_embed::RustEmbed;
-use serde::Serialize;
-use serde::de::DeserializeOwned;
-use std::fs;
+use crate::ui::response::{json_response, read_json_body, save_config};
+use axum::{body::Body, extract::Path, extract::State, http::StatusCode, response::Response};
 use std::sync::Arc;
-
-#[derive(RustEmbed)]
-#[folder = "ui/dist"]
-struct UiAssets;
-
-pub async fn ui_index_handler() -> Result<Response<Body>, StatusCode> {
-    embedded_asset_response("index.html")
-}
-
-pub async fn ui_asset_handler(Path(path): Path<String>) -> Result<Response<Body>, StatusCode> {
-    embedded_asset_response(&path)
-}
 
 pub async fn list_routes_handler(
     State(state): State<Arc<AppState>>,
@@ -230,91 +215,6 @@ pub async fn activate_route_table_handler(
     json_response(&result, StatusCode::OK)
 }
 
-fn embedded_asset_response(path: &str) -> Result<Response<Body>, StatusCode> {
-    let asset = UiAssets::get(path).ok_or(StatusCode::NOT_FOUND)?;
-    let content_type = content_type_for_path(path);
-
-    Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, content_type)
-        .body(Body::from(asset.data.into_owned()))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-}
-
-#[derive(Serialize)]
-struct RouteTables {
-    openai: Vec<RouteRule>,
-    anthropic: Vec<RouteRule>,
-}
-
-#[derive(Serialize)]
-struct ProviderTables {
-    openai: std::collections::HashMap<String, ProviderConfig>,
-    anthropic: std::collections::HashMap<String, ProviderConfig>,
-}
-
-#[derive(Serialize)]
-struct RouteTableList {
-    active: Option<String>,
-    tables: std::collections::HashMap<String, RouteTable>,
-}
-
-#[derive(Serialize)]
-struct UpsertRouteResult {
-    updated: bool,
-    route: RouteRule,
-}
-
-#[derive(Serialize)]
-struct UpsertProviderResult {
-    updated: bool,
-    name: String,
-    provider: ProviderConfig,
-}
-
-#[derive(Serialize)]
-struct DeleteProviderResult {
-    name: String,
-    removed_routes: usize,
-}
-
-#[derive(Serialize)]
-struct DeleteRouteResult {
-    id: String,
-}
-
-#[derive(Serialize)]
-struct DeleteRouteTableResult {
-    name: String,
-}
-
-#[derive(Serialize)]
-struct UpsertRouteTableResult {
-    updated: bool,
-    name: String,
-    table: RouteTable,
-}
-
-#[derive(Serialize)]
-struct ActiveRouteTableResult {
-    active: Option<String>,
-}
-
-async fn read_json_body<T: DeserializeOwned>(
-    req: axum::http::Request<Body>,
-) -> Result<T, StatusCode> {
-    let body = axum::body::to_bytes(req.into_body(), usize::MAX)
-        .await
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    serde_json::from_slice(&body).map_err(|_| StatusCode::BAD_REQUEST)
-}
-
-fn save_config(state: &AppState, config: &AppConfig) -> Result<(), StatusCode> {
-    let config_text =
-        toml::to_string_pretty(config).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    fs::write(&state.config_path, config_text).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-}
-
 fn validate_provider(provider: &ProviderConfig) -> Result<(), StatusCode> {
     if provider.base_url.trim().is_empty() || provider.api_key.trim().is_empty() {
         return Err(StatusCode::BAD_REQUEST);
@@ -342,43 +242,4 @@ fn route_table_ids_exist(routes: &[RouteRule], ids: &[String]) -> bool {
 
 fn route_id_exists(routes: &[RouteRule], id: &str) -> bool {
     routes.iter().any(|route| route.id == id)
-}
-
-fn json_response<T: Serialize>(
-    value: &T,
-    status: StatusCode,
-) -> Result<Response<Body>, StatusCode> {
-    let body = serde_json::to_vec(value).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    Response::builder()
-        .status(status)
-        .header(header::CONTENT_TYPE, "application/json; charset=utf-8")
-        .body(Body::from(body))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-}
-
-fn content_type_for_path(path: &str) -> &'static str {
-    if path.ends_with(".html") {
-        "text/html; charset=utf-8"
-    } else if path.ends_with(".js") {
-        "text/javascript; charset=utf-8"
-    } else if path.ends_with(".css") {
-        "text/css; charset=utf-8"
-    } else if path.ends_with(".json") {
-        "application/json; charset=utf-8"
-    } else if path.ends_with(".svg") {
-        "image/svg+xml"
-    } else if path.ends_with(".ico") {
-        "image/x-icon"
-    } else if path.ends_with(".png") {
-        "image/png"
-    } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {
-        "image/jpeg"
-    } else if path.ends_with(".webp") {
-        "image/webp"
-    } else if path.ends_with(".woff2") {
-        "font/woff2"
-    } else {
-        "application/octet-stream"
-    }
 }
