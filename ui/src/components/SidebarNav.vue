@@ -165,3 +165,200 @@ function routeTableRuleCount(name: string, protocol: Protocol): number {
     </template>
   </aside>
 </template>
+
+<style scoped>
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-right: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(243, 247, 251, 0.84)), var(--surface);
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  margin-top: 6px;
+  padding: 7px 8px;
+  color: inherit;
+  text-align: left;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.list-header:first-child {
+  margin-top: 0;
+}
+
+.list-header:hover:not(:disabled) {
+  color: var(--accent-strong);
+  background: rgba(237, 244, 255, 0.92);
+}
+
+.list-header:focus-visible {
+  outline: 3px solid rgba(39, 100, 216, 0.16);
+}
+
+.list-header h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.provider-row {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 13px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 253, 0.94)),
+    var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.provider-row:hover {
+  border-color: var(--accent-border);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.provider-row.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    var(--shadow-sm);
+}
+
+.provider-row.active {
+  border-color: var(--accent-border);
+  background:
+    linear-gradient(180deg, rgba(237, 244, 255, 0.98), rgba(247, 250, 255, 0.96)),
+    var(--accent-soft);
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    0 0 0 1px rgba(39, 100, 216, 0.08),
+    var(--shadow-sm);
+}
+
+.provider-row.active.selected {
+  border-color: var(--accent);
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    0 0 0 1px rgba(39, 100, 216, 0.14),
+    var(--shadow-md);
+}
+
+.provider-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-url {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.provider-count {
+  justify-self: start;
+  min-height: 22px;
+  padding: 3px 8px;
+  color: #4b5d73;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.provider-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.active-badge {
+  min-height: 22px;
+  padding: 3px 8px;
+  color: #ffffff;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.new-row {
+  place-items: center;
+  min-height: 56px;
+  color: var(--text-muted);
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
+.new-row:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.new-row-plus {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    padding: 18px;
+  }
+}
+</style>
