@@ -83,6 +83,8 @@ pub async fn upsert_provider_handler(
     Path((protocol, name)): Path<(String, String)>,
     req: axum::http::Request<Body>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     if name.trim().is_empty() {
         return Err(StatusCode::BAD_REQUEST);
     }
@@ -109,6 +111,8 @@ pub async fn delete_provider_handler(
     State(state): State<Arc<AppState>>,
     Path((protocol, name)): Path<(String, String)>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     let protocol = parse_protocol(&protocol).ok_or(StatusCode::BAD_REQUEST)?;
     let mut config = state.config.write().await;
     let protocol_config = protocol.config_mut(&mut config);
@@ -135,6 +139,8 @@ pub async fn upsert_route_handler(
     Path(protocol): Path<String>,
     req: axum::http::Request<Body>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     let route: RouteRule = read_json_body(req).await?;
     validate_route(&route)?;
 
@@ -165,6 +171,8 @@ pub async fn delete_route_handler(
     State(state): State<Arc<AppState>>,
     Path((protocol, id)): Path<(String, String)>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     let protocol = parse_protocol(&protocol).ok_or(StatusCode::BAD_REQUEST)?;
     let mut config = state.config.write().await;
     let protocol_config = protocol.config_mut(&mut config);
@@ -184,6 +192,8 @@ pub async fn upsert_route_table_handler(
     Path(name): Path<String>,
     req: axum::http::Request<Body>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     if name.trim().is_empty() {
         return Err(StatusCode::BAD_REQUEST);
     }
@@ -215,6 +225,8 @@ pub async fn delete_route_table_handler(
     State(state): State<Arc<AppState>>,
     Path(name): Path<String>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     let mut config = state.config.write().await;
     if config.route_tables.remove(&name).is_none() {
         return Err(StatusCode::NOT_FOUND);
@@ -232,6 +244,8 @@ pub async fn activate_route_table_handler(
     State(state): State<Arc<AppState>>,
     Path(name): Path<String>,
 ) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
     let mut config = state.config.write().await;
     if !config.route_tables.contains_key(&name) {
         return Err(StatusCode::NOT_FOUND);
@@ -250,6 +264,14 @@ fn validate_provider(provider: &ProviderConfig) -> Result<(), StatusCode> {
     }
 
     Ok(())
+}
+
+fn ensure_config_file_exists(state: &AppState) -> Result<(), StatusCode> {
+    if state.config_path.exists() {
+        Ok(())
+    } else {
+        Err(StatusCode::CONFLICT)
+    }
 }
 
 fn validate_route(route: &RouteRule) -> Result<(), StatusCode> {

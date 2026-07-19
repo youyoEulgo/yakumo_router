@@ -4,6 +4,7 @@ import type { Locale } from '../i18n';
 defineProps<{
   activeRouteTable: string | null;
   currentLocale: Locale;
+  disabled: boolean;
   languageLabel: string;
   localeOptions: { label: string; value: Locale }[];
   loading: boolean;
@@ -30,7 +31,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <header class="topbar">
+  <header class="topbar" :class="{ locked: disabled }">
     <div class="topbar-title">
       <span class="app-mark" aria-hidden="true">Y</span>
       <div>
@@ -44,6 +45,7 @@ const emit = defineEmits<{
         <select
           :value="currentLocale"
           :aria-label="languageLabel"
+          :disabled="disabled"
           @change="emit('changeLocale', ($event.target as HTMLSelectElement).value as Locale)"
         >
           <option v-for="option in localeOptions" :key="option.value" :value="option.value">
@@ -72,7 +74,7 @@ const emit = defineEmits<{
       <button
         class="icon-button refresh-button"
         type="button"
-        :disabled="loading"
+        :disabled="disabled || loading"
         :aria-label="loading ? messages.refreshing : messages.refresh"
         :title="loading ? messages.refreshing : messages.refresh"
         @click="emit('refresh')"
@@ -132,6 +134,13 @@ const emit = defineEmits<{
   border-bottom: 1px solid rgba(195, 204, 217, 0.82);
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(14px);
+}
+
+.topbar.locked {
+  opacity: 0.38;
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(0.45);
 }
 
 .topbar-title,

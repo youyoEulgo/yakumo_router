@@ -71,6 +71,7 @@ const {
     <AppTopbar
       :active-route-table="routeTableState.active"
       :current-locale="locale"
+      :disabled="!configExists"
       :language-label="t('language')"
       :locale-options="localeOptions"
       :loading="loading"
@@ -93,20 +94,22 @@ const {
     />
 
     <section class="workspace">
-      <SidebarNav
-        :active-pane="activePane"
-        :active-protocol="activeProtocol"
-        :loading="loading"
-        :providers="providers"
-        :routes="routes"
-        :route-tables="routeTableState"
-        :selected-provider="selectedProvider"
-        :selected-route-table="selectedRouteTable"
-        @new-provider="selectNewProvider"
-        @select-provider="selectProvider"
-        @new-route-table="resetRouteTableForm"
-        @select-route-table="applyRouteTable"
-      />
+      <div class="locked-region" :class="{ locked: !configExists }" :inert="!configExists">
+        <SidebarNav
+          :active-pane="activePane"
+          :active-protocol="activeProtocol"
+          :loading="loading"
+          :providers="providers"
+          :routes="routes"
+          :route-tables="routeTableState"
+          :selected-provider="selectedProvider"
+          :selected-route-table="selectedRouteTable"
+          @new-provider="selectNewProvider"
+          @select-provider="selectProvider"
+          @new-route-table="resetRouteTableForm"
+          @select-route-table="applyRouteTable"
+        />
+      </div>
 
       <section class="editor">
         <MissingConfigPanel
@@ -121,47 +124,49 @@ const {
           @create="createConfig"
         />
 
-        <RouteTableEditor
-          v-if="activePane === 'route-table'"
-          v-model:route-table-name="routeTableName"
-          :activating="activatingRouteTable"
-          :active-route-table="routeTableState.active"
-          :deleting="deletingRouteTable"
-          :route-table="selectedTable"
-          :routes="routes"
-          :saving="savingRouteTable"
-          :selected-route-table="selectedRouteTable"
-          @activate="activateRouteTable"
-          @delete="deleteSelectedRouteTable"
-          @save="saveRouteTable"
-          @toggle-route="toggleRouteInTable"
-          @move-route="moveRouteInTable"
-        />
+        <div class="locked-region" :class="{ locked: !configExists }" :inert="!configExists">
+          <RouteTableEditor
+            v-if="activePane === 'route-table'"
+            v-model:route-table-name="routeTableName"
+            :activating="activatingRouteTable"
+            :active-route-table="routeTableState.active"
+            :deleting="deletingRouteTable"
+            :route-table="selectedTable"
+            :routes="routes"
+            :saving="savingRouteTable"
+            :selected-route-table="selectedRouteTable"
+            @activate="activateRouteTable"
+            @delete="deleteSelectedRouteTable"
+            @save="saveRouteTable"
+            @toggle-route="toggleRouteInTable"
+            @move-route="moveRouteInTable"
+          />
 
-        <ProviderEditor
-          v-else
-          v-model:show-api-key="showApiKey"
-          :active-protocol="activeProtocol"
-          :deleting-provider="deletingProvider"
-          :is-editing-provider="isEditingProvider"
-          :is-editing-route="isEditingRoute"
-          :provider-form="providerForm"
-          :provider-routes="providerRoutes"
-          :route-editor-open="routeEditorOpen"
-          :route-form="routeForm"
-          :saving-provider="savingProvider"
-          :saving-route="savingRoute"
-          :selected-provider="selectedProvider"
-          :selected-route-id="selectedRouteId"
-          @save-provider="saveProvider"
-          @update-provider-field="updateProviderField"
-          @update-route-field="updateRouteField"
-          @delete-provider="deleteSelectedProvider"
-          @reset-route="startNewRoute"
-          @select-route="applyRoute"
-          @save-route="saveRoute"
-          @delete-route="deleteSelectedRoute"
-        />
+          <ProviderEditor
+            v-else
+            v-model:show-api-key="showApiKey"
+            :active-protocol="activeProtocol"
+            :deleting-provider="deletingProvider"
+            :is-editing-provider="isEditingProvider"
+            :is-editing-route="isEditingRoute"
+            :provider-form="providerForm"
+            :provider-routes="providerRoutes"
+            :route-editor-open="routeEditorOpen"
+            :route-form="routeForm"
+            :saving-provider="savingProvider"
+            :saving-route="savingRoute"
+            :selected-provider="selectedProvider"
+            :selected-route-id="selectedRouteId"
+            @save-provider="saveProvider"
+            @update-provider-field="updateProviderField"
+            @update-route-field="updateRouteField"
+            @delete-provider="deleteSelectedProvider"
+            @reset-route="startNewRoute"
+            @select-route="applyRoute"
+            @save-route="saveRoute"
+            @delete-route="deleteSelectedRoute"
+          />
+        </div>
 
         <StatusBar :key="toastKey" :error="errorMessage" :status="statusMessage" />
       </section>
@@ -178,6 +183,13 @@ const {
   display: grid;
   grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
   min-height: calc(100vh - 84px);
+}
+
+.locked-region.locked {
+  opacity: 0.38;
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(0.45);
 }
 
 .editor {
