@@ -62,8 +62,7 @@ button:disabled {
 .primary-button,
 .ghost-button,
 .danger-button,
-.icon-button,
-.collapse-button {
+.icon-button {
   min-height: 38px;
   border-radius: var(--radius);
   font-weight: 600;
@@ -86,6 +85,13 @@ button:disabled {
 .icon-button:hover:not(:disabled),
 .collapse-button:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .primary-button {
@@ -144,6 +150,24 @@ button:disabled {
 .icon-button svg {
   width: 18px;
   height: 18px;
+}
+
+.collapse-button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  color: var(--text-soft);
+  font-size: 16px;
+  line-height: 1;
+  transition:
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.collapse-button.collapsed {
+  transform: rotate(-90deg);
 }
 
 .compact {

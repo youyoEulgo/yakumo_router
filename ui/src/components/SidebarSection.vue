@@ -34,6 +34,7 @@ const emit = defineEmits<{
   margin-top: 6px;
   padding: 7px 8px;
   color: inherit;
+  line-height: 1;
   text-align: left;
   border: 0;
   border-radius: var(--radius);
@@ -58,6 +59,7 @@ const emit = defineEmits<{
 
 .list-header h2 {
   margin: 0;
+  flex: 1;
   color: var(--text);
   font-size: 15px;
   line-height: 1.3;

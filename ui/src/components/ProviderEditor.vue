@@ -164,9 +164,15 @@ const emit = defineEmits<{
 }
 
 .collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   width: 100%;
   min-height: 40px;
+  padding: 7px 8px;
   color: inherit;
+  line-height: 1;
   text-align: left;
   border: 0;
   background: transparent;
