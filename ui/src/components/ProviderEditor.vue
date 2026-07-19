@@ -45,7 +45,9 @@ const emit = defineEmits<{
     <div class="panel-header">
       <div>
         <h2>{{ isEditingProvider ? t('editProvider') : t('newProvider') }}</h2>
-        <p>{{ t('providerSettings', { protocol: protocolLabel(activeProtocol) }) }}</p>
+        <p class="panel-note">
+          {{ t('providerSettings', { protocol: protocolLabel(activeProtocol) }) }}
+        </p>
       </div>
     </div>
 
@@ -71,8 +73,10 @@ const emit = defineEmits<{
     >
       <div>
         <h2>{{ t('rules') }}</h2>
-        <p v-if="selectedProvider">{{ t('routesUsing', { provider: selectedProvider }) }}</p>
-        <p v-else>{{ t('selectProviderForRules') }}</p>
+        <p v-if="selectedProvider" class="panel-note">
+          {{ t('routesUsing', { provider: selectedProvider }) }}
+        </p>
+        <p v-else class="panel-note">{{ t('selectProviderForRules') }}</p>
       </div>
       <span class="collapse-button" :class="{ collapsed: rulesCollapsed }" aria-hidden="true">
         ▾
@@ -158,10 +162,19 @@ const emit = defineEmits<{
   letter-spacing: 0;
 }
 
-.panel-header p {
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-size: 13px;
+.panel-note {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 26px;
+  margin-top: 8px;
+  padding: 4px 8px;
+  color: #536276;
+  border-left: 3px solid var(--accent-border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: rgba(237, 244, 255, 0.68);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .collapsible-header {

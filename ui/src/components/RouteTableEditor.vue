@@ -70,11 +70,11 @@ const {
     <div class="panel-header">
       <div>
         <h2>{{ t('routeTable') }}</h2>
-        <p v-if="selectedRouteTable">
+        <p v-if="selectedRouteTable" class="panel-note">
           {{ selectedRouteTable }}
           {{ activeRouteTable === selectedRouteTable ? t('isActive') : t('isInactive') }}
         </p>
-        <p v-else>{{ t('newRouteTable') }}</p>
+        <p v-else class="panel-note">{{ t('newRouteTable') }}</p>
       </div>
       <button
         class="ghost-button compact"
@@ -166,10 +166,19 @@ const {
   letter-spacing: 0;
 }
 
-.panel-header p {
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-size: 13px;
+.panel-note {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 26px;
+  margin-top: 8px;
+  padding: 4px 8px;
+  color: #536276;
+  border-left: 3px solid var(--accent-border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: rgba(237, 244, 255, 0.68);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .route-table-layout,
