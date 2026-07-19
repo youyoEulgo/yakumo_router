@@ -3,9 +3,13 @@ import './sidebar-nav-row.css';
 
 defineProps<{
   active: boolean;
+  activeLabel: string;
   anthropicRuleCount: number;
+  anthropicRulesLabel: string;
+  inactiveLabel: string;
   name: string;
   openaiRuleCount: number;
+  openaiRulesLabel: string;
   selected: boolean;
 }>();
 </script>
@@ -14,12 +18,13 @@ defineProps<{
   <button type="button" class="nav-row" :class="{ active, selected }">
     <span class="nav-row-name">{{ name }}</span>
     <span class="nav-row-detail">
-      {{ active ? 'Active route table' : 'Inactive' }}
+      {{ active ? activeLabel : inactiveLabel }}
     </span>
     <span class="nav-row-meta">
-      <span v-if="active" class="active-badge">Active</span>
+      <span v-if="active" class="active-badge">{{ activeLabel }}</span>
       <span class="nav-row-count">
-        {{ openaiRuleCount }} OpenAI / {{ anthropicRuleCount }} Anthropic rules
+        {{ openaiRuleCount }} {{ openaiRulesLabel }} / {{ anthropicRuleCount }}
+        {{ anthropicRulesLabel }}
       </span>
     </span>
   </button>

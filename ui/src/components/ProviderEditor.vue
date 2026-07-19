@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import ProviderForm from './ProviderForm.vue';
 import RouteRuleForm from './RouteRuleForm.vue';
+import { protocolLabel, useI18n } from '../i18n';
 import type { Protocol, RouteRule } from '../types';
-import { protocolLabels } from '../types';
 
 defineProps<{
   activeProtocol: Protocol;
@@ -26,6 +26,7 @@ defineProps<{
 
 const showApiKey = defineModel<boolean>('showApiKey', { required: true });
 const rulesCollapsed = ref(false);
+const { t } = useI18n();
 
 const emit = defineEmits<{
   updateProviderField: [field: 'name' | 'base_url' | 'api_key', value: string];
@@ -43,8 +44,8 @@ const emit = defineEmits<{
   <section class="panel">
     <div class="panel-header">
       <div>
-        <h2>{{ isEditingProvider ? 'Edit Provider' : 'New Provider' }}</h2>
-        <p>{{ protocolLabels[activeProtocol] }} provider settings</p>
+        <h2>{{ isEditingProvider ? t('editProvider') : t('newProvider') }}</h2>
+        <p>{{ t('providerSettings', { protocol: protocolLabel(activeProtocol) }) }}</p>
       </div>
     </div>
 
@@ -69,9 +70,9 @@ const emit = defineEmits<{
       @click="rulesCollapsed = !rulesCollapsed"
     >
       <div>
-        <h2>Rules</h2>
-        <p v-if="selectedProvider">Routes using {{ selectedProvider }}</p>
-        <p v-else>Select a provider to edit rules.</p>
+        <h2>{{ t('rules') }}</h2>
+        <p v-if="selectedProvider">{{ t('routesUsing', { provider: selectedProvider }) }}</p>
+        <p v-else>{{ t('selectProviderForRules') }}</p>
       </div>
       <span class="collapse-button" :class="{ collapsed: rulesCollapsed }" aria-hidden="true">
         ▾
@@ -81,7 +82,7 @@ const emit = defineEmits<{
     <div v-if="selectedProvider && !rulesCollapsed" class="rules-layout">
       <div class="rule-list">
         <div v-if="providerRoutes.length === 0" class="empty-state">
-          No rules for this provider.
+          {{ t('noProviderRules') }}
         </div>
         <button
           v-for="route in providerRoutes"
@@ -94,13 +95,13 @@ const emit = defineEmits<{
           <span class="route-id">{{ route.id }}</span>
           <span class="route-detail">
             {{ route.match_type ?? 'contains' }} {{ route.match }}
-            {{ route.forward_only ? '-> forward only' : `-> ${route.model}` }}
+            {{ route.forward_only ? `-> ${t('forwardOnly')}` : `-> ${route.model}` }}
           </span>
         </button>
         <button
           type="button"
           class="route-row new-row"
-          aria-label="New rule"
+          :aria-label="t('newRule')"
           @click="emit('resetRoute')"
         >
           <span class="new-row-plus" aria-hidden="true">+</span>

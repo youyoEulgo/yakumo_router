@@ -61,8 +61,3 @@ export interface DeleteProviderResult {
 export interface DeleteRouteResult {
   id: string;
 }
-
-export const protocolLabels: Record<Protocol, string> = {
-  openai: 'OpenAI',
-  anthropic: 'Anthropic',
-};

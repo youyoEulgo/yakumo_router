@@ -4,9 +4,10 @@ import type { ProviderTables, RouteTables, RouteTableState } from '../types';
 
 type ConfigStateOptions = {
   onError: (message: string) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 };
 
-export function useConfigState({ onError }: ConfigStateOptions) {
+export function useConfigState({ onError, t }: ConfigStateOptions) {
   const providers = reactive<ProviderTables>({
     openai: {},
     anthropic: {},
@@ -43,7 +44,7 @@ export function useConfigState({ onError }: ConfigStateOptions) {
       routeTableState.active = state.routeTables.active;
       routeTableState.tables = state.routeTables.tables;
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to load configuration.');
+      onError(error instanceof Error ? error.message : t('failedLoadConfig'));
     } finally {
       loading.value = false;
     }

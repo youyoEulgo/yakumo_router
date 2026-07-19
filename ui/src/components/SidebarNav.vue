@@ -8,11 +8,11 @@ import type {
   RouteTables,
   RouteTableState,
 } from '../types';
-import { protocolLabels } from '../types';
 import NewNavRow from './NewNavRow.vue';
 import ProviderNavRow from './ProviderNavRow.vue';
 import RouteTableNavRow from './RouteTableNavRow.vue';
 import SidebarSection from './SidebarSection.vue';
+import { useI18n } from '../i18n';
 
 const props = defineProps<{
   activePane: EditorPane;
@@ -37,6 +37,8 @@ const collapsed = reactive<Record<Protocol | 'routeTables', boolean>>({
   anthropic: false,
   routeTables: false,
 });
+
+const { protocolLabel, t } = useI18n();
 
 function providerEntries(protocol: Protocol): [string, ProviderConfig][] {
   return Object.entries(props.providers[protocol]).sort(([left], [right]) =>
@@ -63,12 +65,12 @@ function routeTableRuleCount(name: string, protocol: Protocol): number {
       v-for="protocol in ['openai', 'anthropic'] as Protocol[]"
       :key="protocol"
       :collapsed="collapsed[protocol]"
-      :title="`${protocolLabels[protocol]} Providers`"
+      :title="t('providersSection', { protocol: protocolLabel(protocol) })"
       @toggle="collapsed[protocol] = !collapsed[protocol]"
     >
-      <div v-if="loading" class="empty-state">Loading providers...</div>
+      <div v-if="loading" class="empty-state">{{ t('refreshing') }}...</div>
       <div v-else-if="providerEntries(protocol).length === 0" class="empty-state">
-        No providers configured.
+        {{ t('noProviders') }}
       </div>
       <template v-else>
         <ProviderNavRow
@@ -77,6 +79,7 @@ function routeTableRuleCount(name: string, protocol: Protocol): number {
           :name="name"
           :provider="provider"
           :route-count="providerRouteCount(protocol, name)"
+          :route-count-label="t('rules')"
           :selected="
             activePane === 'provider' && activeProtocol === protocol && selectedProvider === name
           "
@@ -85,33 +88,37 @@ function routeTableRuleCount(name: string, protocol: Protocol): number {
       </template>
 
       <NewNavRow
-        :label="`New ${protocolLabels[protocol]} provider`"
+        :label="t('newProviderFor', { protocol: protocolLabel(protocol) })"
         @click="emit('newProvider', protocol)"
       />
     </SidebarSection>
 
     <SidebarSection
       :collapsed="collapsed.routeTables"
-      title="Route Tables"
+      :title="t('routeTables')"
       @toggle="collapsed.routeTables = !collapsed.routeTables"
     >
       <div v-if="routeTableEntries().length === 0" class="empty-state">
-        No route tables configured.
+        {{ t('noRouteTables') }}
       </div>
       <template v-else>
         <RouteTableNavRow
           v-for="name in routeTableEntries()"
           :key="name"
           :active="routeTables.active === name"
+          :active-label="t('active')"
           :anthropic-rule-count="routeTableRuleCount(name, 'anthropic')"
+          :anthropic-rules-label="t('rules')"
+          :inactive-label="t('inactive')"
           :name="name"
           :openai-rule-count="routeTableRuleCount(name, 'openai')"
+          :openai-rules-label="t('rules')"
           :selected="activePane === 'route-table' && selectedRouteTable === name"
           @click="emit('selectRouteTable', name)"
         />
       </template>
 
-      <NewNavRow label="New route table" @click="emit('newRouteTable')" />
+      <NewNavRow :label="t('newRouteTable')" @click="emit('newRouteTable')" />
     </SidebarSection>
   </aside>
 </template>

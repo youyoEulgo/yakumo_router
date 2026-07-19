@@ -14,6 +14,7 @@ type ProviderRuleEditorOptions = {
   clearToast: () => void;
   onError: (message: string) => void;
   onStatus: (message: string) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 };
 
 export function useProviderRuleEditor({
@@ -23,6 +24,7 @@ export function useProviderRuleEditor({
   onStatus,
   reload,
   routes,
+  t,
 }: ProviderRuleEditorOptions) {
   const activeProtocol = ref<Protocol>('openai');
   const selectedProvider = ref('');
@@ -146,9 +148,9 @@ export function useProviderRuleEditor({
       });
       await reload();
       applyProvider(result.name, result.provider);
-      onStatus(result.updated ? 'Provider saved.' : 'Provider created.');
+      onStatus(result.updated ? t('providerSaved') : t('providerCreated'));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to save provider.');
+      onError(error instanceof Error ? error.message : t('failedSaveProvider'));
     } finally {
       savingProvider.value = false;
     }
@@ -165,9 +167,9 @@ export function useProviderRuleEditor({
       const result = await deleteProviderApi(activeProtocol.value, selectedProvider.value);
       await reload();
       resetProviderForm();
-      onStatus(`Provider deleted. ${result.removed_routes} route(s) removed.`);
+      onStatus(t('providerDeleted', { count: result.removed_routes }));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to delete provider.');
+      onError(error instanceof Error ? error.message : t('failedDeleteProvider'));
     } finally {
       deletingProvider.value = false;
     }
@@ -181,9 +183,9 @@ export function useProviderRuleEditor({
       const result = await saveRouteApi(activeProtocol.value, routeForm);
       await reload();
       applyRoute(result.route);
-      onStatus(result.updated ? 'Rule saved.' : 'Rule created.');
+      onStatus(result.updated ? t('ruleSaved') : t('ruleCreated'));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to save rule.');
+      onError(error instanceof Error ? error.message : t('failedSaveRule'));
     } finally {
       savingRoute.value = false;
     }
@@ -200,9 +202,9 @@ export function useProviderRuleEditor({
       const result = await deleteRouteApi(activeProtocol.value, selectedRouteId.value);
       await reload();
       resetRouteForm();
-      onStatus(`Rule ${result.id} deleted.`);
+      onStatus(t('routeDeleted', { id: result.id }));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to delete rule.');
+      onError(error instanceof Error ? error.message : t('failedDeleteRule'));
     } finally {
       savingRoute.value = false;
     }

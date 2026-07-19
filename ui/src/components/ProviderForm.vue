@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SaveIcon from './SaveIcon.vue';
+import { useI18n } from '../i18n';
 
 defineProps<{
   deletingProvider: boolean;
@@ -13,6 +14,7 @@ defineProps<{
 }>();
 
 const showApiKey = defineModel<boolean>('showApiKey', { required: true });
+const { t } = useI18n();
 
 const emit = defineEmits<{
   deleteProvider: [];
@@ -28,7 +30,7 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
 <template>
   <form class="form-grid" @submit.prevent="emit('saveProvider')">
     <label>
-      <span>Name</span>
+      <span>{{ t('name') }}</span>
       <input
         :value="providerForm.name"
         required
@@ -39,7 +41,7 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
     </label>
 
     <label>
-      <span>Base URL</span>
+      <span>{{ t('baseUrl') }}</span>
       <input
         :value="providerForm.base_url"
         required
@@ -50,7 +52,7 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
     </label>
 
     <label>
-      <span>API Key</span>
+      <span>{{ t('apiKey') }}</span>
       <span class="secret-field">
         <input
           :value="providerForm.api_key"
@@ -63,8 +65,8 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
         <button
           class="icon-button"
           type="button"
-          :aria-label="showApiKey ? 'Hide API key' : 'Show API key'"
-          :title="showApiKey ? 'Hide API key' : 'Show API key'"
+          :aria-label="showApiKey ? t('hideApiKey') : t('showApiKey')"
+          :title="showApiKey ? t('hideApiKey') : t('showApiKey')"
           @click="showApiKey = !showApiKey"
         >
           <svg
@@ -104,7 +106,7 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
     <div class="actions">
       <button class="primary-button" type="submit" :disabled="savingProvider">
         <SaveIcon />
-        {{ savingProvider ? 'Saving...' : 'Save' }}
+        {{ savingProvider ? t('saving') : t('save') }}
       </button>
       <button
         class="danger-button"
@@ -112,7 +114,7 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
         :disabled="!isEditingProvider || deletingProvider"
         @click="emit('deleteProvider')"
       >
-        {{ deletingProvider ? 'Deleting...' : 'Delete' }}
+        {{ deletingProvider ? t('deleting') : t('delete') }}
       </button>
     </div>
   </form>

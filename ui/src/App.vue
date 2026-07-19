@@ -5,6 +5,9 @@ import RouteTableEditor from './components/RouteTableEditor.vue';
 import SidebarNav from './components/SidebarNav.vue';
 import StatusBar from './components/StatusBar.vue';
 import { useRouterConfigEditor } from './composables/useRouterConfigEditor';
+import { useI18n } from './i18n';
+
+const { locale, localeOptions, setLocale, t } = useI18n();
 
 const {
   activateRouteTable,
@@ -63,11 +66,25 @@ const {
   <main class="app-shell">
     <AppTopbar
       :active-route-table="routeTableState.active"
+      :current-locale="locale"
+      :language-label="t('language')"
+      :locale-options="localeOptions"
       :loading="loading"
+      :messages="{
+        active: t('active'),
+        configurationSummary: t('configurationSummary'),
+        none: t('none'),
+        providers: t('providers'),
+        refresh: t('refresh'),
+        refreshing: t('refreshing'),
+        rules: t('rules'),
+        tables: t('tables'),
+      }"
       :total-providers="totalProviders"
       :total-routes="totalRoutes"
       :total-route-tables="totalRouteTables"
       :topbar-context="topbarContext"
+      @change-locale="setLocale"
       @refresh="loadAll"
     />
 

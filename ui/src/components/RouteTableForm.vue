@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SaveIcon from './SaveIcon.vue';
+import { useI18n } from '../i18n';
 
 defineProps<{
   deleting: boolean;
@@ -14,6 +15,8 @@ const emit = defineEmits<{
   'update:routeTableName': [name: string];
 }>();
 
+const { t } = useI18n();
+
 function updateRouteTableName(event: Event): void {
   emit('update:routeTableName', (event.target as HTMLInputElement).value);
 }
@@ -22,7 +25,7 @@ function updateRouteTableName(event: Event): void {
 <template>
   <form class="route-table-form" @submit.prevent="emit('save')">
     <label>
-      <span>Name</span>
+      <span>{{ t('name') }}</span>
       <input
         :value="routeTableName"
         required
@@ -35,7 +38,7 @@ function updateRouteTableName(event: Event): void {
     <div class="actions">
       <button class="primary-button" type="submit" :disabled="saving">
         <SaveIcon />
-        {{ saving ? 'Saving...' : 'Save' }}
+        {{ saving ? t('saving') : t('save') }}
       </button>
       <button
         class="danger-button"
@@ -43,7 +46,7 @@ function updateRouteTableName(event: Event): void {
         :disabled="!selectedRouteTable || deleting"
         @click="emit('delete')"
       >
-        {{ deleting ? 'Deleting...' : 'Delete' }}
+        {{ deleting ? t('deleting') : t('delete') }}
       </button>
     </div>
   </form>

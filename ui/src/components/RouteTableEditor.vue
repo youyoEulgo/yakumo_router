@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouteDragSort } from '../composables/useRouteDragSort';
+import { protocolLabel, useI18n } from '../i18n';
 import type { Protocol, RouteRule, RouteTable } from '../types';
-import { protocolLabels } from '../types';
 import RouteTableForm from './RouteTableForm.vue';
 import RouteToggleRow from './RouteToggleRow.vue';
 
@@ -24,6 +24,8 @@ const emit = defineEmits<{
   toggleRoute: [protocol: Protocol, routeId: string, enabled: boolean];
   moveRoute: [protocol: Protocol, routeId: string, direction: -1 | 1];
 }>();
+
+const { t } = useI18n();
 
 function routeEnabled(table: RouteTable | undefined, protocol: Protocol, routeId: string): boolean {
   return table?.[protocol].includes(routeId) ?? false;
@@ -67,12 +69,12 @@ const {
   <section class="panel">
     <div class="panel-header">
       <div>
-        <h2>Route Table</h2>
+        <h2>{{ t('routeTable') }}</h2>
         <p v-if="selectedRouteTable">
           {{ selectedRouteTable }}
-          {{ activeRouteTable === selectedRouteTable ? 'is active' : 'is inactive' }}
+          {{ activeRouteTable === selectedRouteTable ? t('isActive') : t('isInactive') }}
         </p>
-        <p v-else>New route table</p>
+        <p v-else>{{ t('newRouteTable') }}</p>
       </div>
       <button
         class="ghost-button compact"
@@ -80,7 +82,7 @@ const {
         :disabled="!selectedRouteTable || activeRouteTable === selectedRouteTable || activating"
         @click="emit('activate')"
       >
-        {{ activating ? 'Activating...' : 'Activate' }}
+        {{ activating ? t('activating') : t('activate') }}
       </button>
     </div>
 
@@ -101,8 +103,10 @@ const {
           :key="protocol"
           class="route-table-section"
         >
-          <h3>{{ protocolLabels[protocol] }} Rules</h3>
-          <div v-if="routes[protocol].length === 0" class="empty-state">No rules configured.</div>
+          <h3>{{ t('rulesSection', { protocol: protocolLabel(protocol) }) }}</h3>
+          <div v-if="routes[protocol].length === 0" class="empty-state">
+            {{ t('noRules') }}
+          </div>
           <div v-else class="route-toggle-list">
             <RouteToggleRow
               v-for="route in orderedRoutes(routeTable, routes, protocol)"

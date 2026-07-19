@@ -1,7 +1,22 @@
 <script setup lang="ts">
+import type { Locale } from '../i18n';
+
 defineProps<{
   activeRouteTable: string | null;
+  currentLocale: Locale;
+  languageLabel: string;
+  localeOptions: { label: string; value: Locale }[];
   loading: boolean;
+  messages: {
+    active: string;
+    configurationSummary: string;
+    none: string;
+    providers: string;
+    refresh: string;
+    refreshing: string;
+    rules: string;
+    tables: string;
+  };
   totalProviders: number;
   totalRoutes: number;
   totalRouteTables: number;
@@ -9,6 +24,7 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
+  changeLocale: [locale: Locale];
   refresh: [];
 }>();
 </script>
@@ -23,30 +39,42 @@ const emit = defineEmits<{
       </div>
     </div>
     <div class="topbar-actions">
-      <div class="topbar-stats" aria-label="Configuration summary">
+      <label class="language-select">
+        <span>{{ languageLabel }}</span>
+        <select
+          :value="currentLocale"
+          :aria-label="languageLabel"
+          @change="emit('changeLocale', ($event.target as HTMLSelectElement).value as Locale)"
+        >
+          <option v-for="option in localeOptions" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+      <div class="topbar-stats" :aria-label="messages.configurationSummary">
         <span class="stat-pill active-route-pill">
-          <span class="stat-label">Active</span>
-          <strong>{{ activeRouteTable ?? 'None' }}</strong>
+          <span class="stat-label">{{ messages.active }}</span>
+          <strong>{{ activeRouteTable ?? messages.none }}</strong>
         </span>
         <span class="stat-pill">
           <strong>{{ totalProviders }}</strong>
-          <span class="stat-label">Providers</span>
+          <span class="stat-label">{{ messages.providers }}</span>
         </span>
         <span class="stat-pill">
           <strong>{{ totalRoutes }}</strong>
-          <span class="stat-label">Rules</span>
+          <span class="stat-label">{{ messages.rules }}</span>
         </span>
         <span class="stat-pill">
           <strong>{{ totalRouteTables }}</strong>
-          <span class="stat-label">Tables</span>
+          <span class="stat-label">{{ messages.tables }}</span>
         </span>
       </div>
       <button
         class="icon-button refresh-button"
         type="button"
         :disabled="loading"
-        :aria-label="loading ? 'Refreshing' : 'Refresh'"
-        :title="loading ? 'Refreshing' : 'Refresh'"
+        :aria-label="loading ? messages.refreshing : messages.refresh"
+        :title="loading ? messages.refreshing : messages.refresh"
         @click="emit('refresh')"
       >
         <svg
@@ -109,7 +137,8 @@ const emit = defineEmits<{
 .topbar-title,
 .topbar-actions,
 .topbar-stats,
-.stat-pill {
+.stat-pill,
+.language-select {
   display: flex;
   align-items: center;
 }
@@ -129,6 +158,22 @@ const emit = defineEmits<{
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.language-select {
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.language-select select {
+  min-height: 34px;
+  padding: 0 30px 0 10px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-sm);
 }
 
 .app-mark {

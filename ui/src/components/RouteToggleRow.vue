@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from '../i18n';
 import type { RouteRule } from '../types';
 
 const props = defineProps<{
@@ -19,6 +20,8 @@ const emit = defineEmits<{
   move: [direction: -1 | 1];
   toggle: [enabled: boolean];
 }>();
+
+const { t } = useI18n();
 
 function onRouteToggle(event: Event): void {
   emit('toggle', (event.target as HTMLInputElement).checked);
@@ -65,8 +68,8 @@ function onRouteToggle(event: Event): void {
         type="button"
         class="ghost-button compact"
         :disabled="disabled || !enabled"
-        title="Move up"
-        aria-label="Move up"
+        :title="t('moveUp')"
+        :aria-label="t('moveUp')"
         @click="emit('move', -1)"
       >
         ↑
@@ -75,8 +78,8 @@ function onRouteToggle(event: Event): void {
         type="button"
         class="ghost-button compact"
         :disabled="disabled || !enabled"
-        title="Move down"
-        aria-label="Move down"
+        :title="t('moveDown')"
+        :aria-label="t('moveDown')"
         @click="emit('move', 1)"
       >
         ↓

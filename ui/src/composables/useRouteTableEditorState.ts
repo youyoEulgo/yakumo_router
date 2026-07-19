@@ -13,6 +13,7 @@ type RouteTableEditorStateOptions = {
   clearToast: () => void;
   onError: (message: string) => void;
   onStatus: (message: string) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 };
 
 export function useRouteTableEditorState({
@@ -22,6 +23,7 @@ export function useRouteTableEditorState({
   onStatus,
   reload,
   routeTableState,
+  t,
 }: RouteTableEditorStateOptions) {
   const selectedRouteTable = ref('');
   const routeTableName = ref('');
@@ -81,9 +83,9 @@ export function useRouteTableEditorState({
 
     try {
       await saveRouteTableApi(selectedRouteTable.value, selectedTable.value);
-      onStatus('Route table saved.');
+      onStatus(t('routeTableSaved'));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to save route table.');
+      onError(error instanceof Error ? error.message : t('failedSaveRouteTable'));
     } finally {
       savingRouteTable.value = false;
     }
@@ -135,7 +137,7 @@ export function useRouteTableEditorState({
   async function saveRouteTable(): Promise<void> {
     const name = routeTableName.value.trim();
     if (!name) {
-      onError('Route table name is required.');
+      onError(t('routeTableNameRequired'));
       return;
     }
 
@@ -146,9 +148,9 @@ export function useRouteTableEditorState({
       selectedRouteTable.value = name;
       await reload();
       applyRouteTable(name);
-      onStatus('Route table saved.');
+      onStatus(t('routeTableSaved'));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to save route table.');
+      onError(error instanceof Error ? error.message : t('failedSaveRouteTable'));
     } finally {
       savingRouteTable.value = false;
     }
@@ -166,9 +168,9 @@ export function useRouteTableEditorState({
       await deleteRouteTableApi(deleted);
       await reload();
       clearRouteTableSelection();
-      onStatus(`Route table ${deleted} deleted.`);
+      onStatus(t('routeTableDeleted', { name: deleted }));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to delete route table.');
+      onError(error instanceof Error ? error.message : t('failedDeleteRouteTable'));
     } finally {
       deletingRouteTable.value = false;
     }
@@ -184,9 +186,9 @@ export function useRouteTableEditorState({
     try {
       await activateRouteTableApi(selectedRouteTable.value);
       routeTableState.active = selectedRouteTable.value;
-      onStatus('Route table activated.');
+      onStatus(t('routeTableActivated'));
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to activate route table.');
+      onError(error instanceof Error ? error.message : t('failedActivateRouteTable'));
     } finally {
       activatingRouteTable.value = false;
     }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SaveIcon from './SaveIcon.vue';
+import { useI18n } from '../i18n';
 import type { RouteRule } from '../types';
 
 defineProps<{
@@ -13,6 +14,8 @@ const emit = defineEmits<{
   saveRoute: [];
   updateRouteField: [field: keyof RouteRule, value: boolean | string];
 }>();
+
+const { t } = useI18n();
 
 function updateRouteTextField(field: keyof RouteRule, event: Event): void {
   emit(
@@ -41,7 +44,7 @@ function updateForwardOnly(event: Event): void {
     </label>
 
     <label>
-      <span>Match</span>
+      <span>{{ t('match') }}</span>
       <input
         :value="routeForm.match"
         required
@@ -52,16 +55,16 @@ function updateForwardOnly(event: Event): void {
     </label>
 
     <label>
-      <span>Match Type</span>
+      <span>{{ t('matchType') }}</span>
       <select :value="routeForm.match_type" @change="updateRouteTextField('match_type', $event)">
-        <option value="contains">Contains</option>
-        <option value="exact">Exact</option>
-        <option value="regex">Regex</option>
+        <option value="contains">{{ t('contains') }}</option>
+        <option value="exact">{{ t('exact') }}</option>
+        <option value="regex">{{ t('regex') }}</option>
       </select>
     </label>
 
     <label>
-      <span>Upstream Model</span>
+      <span>{{ t('upstreamModel') }}</span>
       <input
         :value="routeForm.model"
         :required="!routeForm.forward_only"
@@ -74,13 +77,13 @@ function updateForwardOnly(event: Event): void {
 
     <label class="checkbox-row">
       <input :checked="routeForm.forward_only" type="checkbox" @change="updateForwardOnly" />
-      <span>Forward only</span>
+      <span>{{ t('forwardOnly') }}</span>
     </label>
 
     <div class="actions">
       <button class="primary-button" type="submit" :disabled="savingRoute">
         <SaveIcon />
-        {{ savingRoute ? 'Saving...' : 'Save' }}
+        {{ savingRoute ? t('saving') : t('save') }}
       </button>
       <button
         class="danger-button"
@@ -88,7 +91,7 @@ function updateForwardOnly(event: Event): void {
         :disabled="!isEditingRoute || savingRoute"
         @click="emit('deleteRoute')"
       >
-        Delete
+        {{ t('delete') }}
       </button>
     </div>
   </form>

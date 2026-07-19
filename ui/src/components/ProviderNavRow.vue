@@ -5,6 +5,7 @@ import type { ProviderConfig } from '../types';
 defineProps<{
   name: string;
   provider: ProviderConfig;
+  routeCountLabel: string;
   routeCount: number;
   selected: boolean;
 }>();
@@ -14,6 +15,6 @@ defineProps<{
   <button type="button" class="nav-row" :class="{ selected }">
     <span class="nav-row-name">{{ name }}</span>
     <span class="nav-row-detail">{{ provider.base_url }}</span>
-    <span class="nav-row-count">{{ routeCount }} rules</span>
+    <span class="nav-row-count">{{ routeCount }} {{ routeCountLabel }}</span>
   </button>
 </template>
