@@ -33,7 +33,7 @@ const emit = defineEmits<{
 <template>
   <header class="topbar" :class="{ locked: disabled }">
     <div class="topbar-title">
-      <span class="app-mark" aria-hidden="true">Y</span>
+      <img class="app-mark" src="/yakumo.png" alt="" aria-hidden="true" />
       <div>
         <h1>Yakumo Router</h1>
         <p>{{ topbarContext }}</p>
@@ -186,17 +186,12 @@ const emit = defineEmits<{
 }
 
 .app-mark {
-  display: grid;
-  place-items: center;
   width: 42px;
   height: 42px;
   flex: 0 0 auto;
-  color: #ffffff;
   border-radius: var(--radius);
-  background: var(--accent);
+  object-fit: cover;
   box-shadow: 0 1px 2px rgba(18, 24, 38, 0.14);
-  font-size: 18px;
-  font-weight: 700;
 }
 
 .stat-pill {
