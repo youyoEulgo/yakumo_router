@@ -26,9 +26,14 @@ export interface RouteTables {
   anthropic: RouteRule[];
 }
 
+export interface RouteTableEntry {
+  id: string;
+  enabled: boolean;
+}
+
 export interface RouteTable {
-  openai: string[];
-  anthropic: string[];
+  openai: RouteTableEntry[];
+  anthropic: RouteTableEntry[];
 }
 
 export interface RouteTableState {

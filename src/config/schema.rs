@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::path::PathBuf;
@@ -101,15 +101,78 @@ pub struct RouteRule {
     pub forward_only: bool,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct RouteTable {
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct RouteTableEntry {
+    pub id: String,
     #[serde(default)]
-    pub openai: Vec<String>,
-    #[serde(default)]
-    pub anthropic: Vec<String>,
+    pub enabled: bool,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct RouteTable {
+    pub openai: Vec<RouteTableEntry>,
+    pub anthropic: Vec<RouteTableEntry>,
+    #[serde(skip)]
+    pub legacy_openai: bool,
+    #[serde(skip)]
+    pub legacy_anthropic: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum RawRouteTableEntry {
+    Id(String),
+    Detailed {
+        id: String,
+        #[serde(default)]
+        enabled: bool,
+    },
+}
+
+impl<'de> Deserialize<'de> for RouteTable {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct RawRouteTable {
+            #[serde(default)]
+            openai: Vec<RawRouteTableEntry>,
+            #[serde(default)]
+            anthropic: Vec<RawRouteTableEntry>,
+        }
+
+        fn convert(entries: Vec<RawRouteTableEntry>) -> (Vec<RouteTableEntry>, bool) {
+            let mut legacy = false;
+            let converted = entries
+                .into_iter()
+                .map(|entry| match entry {
+                    RawRouteTableEntry::Id(id) => {
+                        legacy = true;
+                        RouteTableEntry { id, enabled: true }
+                    }
+                    RawRouteTableEntry::Detailed { id, enabled } => RouteTableEntry { id, enabled },
+                })
+                .collect();
+
+            (converted, legacy)
+        }
+
+        let raw = RawRouteTable::deserialize(deserializer)?;
+        let (openai, legacy_openai) = convert(raw.openai);
+        let (anthropic, legacy_anthropic) = convert(raw.anthropic);
+
+        Ok(RouteTable {
+            openai,
+            anthropic,
+            legacy_openai,
+            legacy_anthropic,
+        })
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Protocol {
     OpenAi,
     Anthropic,
@@ -130,7 +193,7 @@ impl Protocol {
         }
     }
 
-    pub fn table_routes_mut<'a>(&self, table: &'a mut RouteTable) -> &'a mut Vec<String> {
+    pub fn table_routes_mut<'a>(&self, table: &'a mut RouteTable) -> &'a mut Vec<RouteTableEntry> {
         match self {
             Protocol::OpenAi => &mut table.openai,
             Protocol::Anthropic => &mut table.anthropic,
@@ -165,7 +228,7 @@ fn default_key_file() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::AppConfig;
+    use super::{AppConfig, RouteTable, RouteTableEntry};
     use crate::config::storage::{DEFAULT_CONFIG, MINIMAL_CONFIG};
 
     #[test]
@@ -186,5 +249,74 @@ mod tests {
         assert!(config.anthropic.routes.is_empty());
         assert!(config.route_tables.is_empty());
         assert_eq!(config.active_route_table, None);
+    }
+
+    #[test]
+    fn legacy_route_table_ids_deserialize_as_enabled_entries() {
+        let config: AppConfig = toml::from_str(
+            r#"
+[route_tables.main]
+openai = ["route-a", "route-b"]
+anthropic = ["route-c"]
+"#,
+        )
+        .expect("legacy config parses");
+
+        let table = config.route_tables.get("main").expect("table exists");
+        assert_eq!(table.openai.len(), 2);
+        assert!(table.openai.iter().all(|entry| entry.enabled));
+        assert!(table.legacy_openai);
+        assert!(table.legacy_anthropic);
+    }
+
+    #[test]
+    fn detailed_route_table_entries_preserve_enabled_flag() {
+        let config: AppConfig = toml::from_str(
+            r#"
+[route_tables.main]
+openai = [
+    { id = "route-a", enabled = true },
+    { id = "route-b", enabled = false },
+]
+"#,
+        )
+        .expect("detailed config parses");
+
+        let table = config.route_tables.get("main").expect("table exists");
+        assert_eq!(table.openai.len(), 2);
+        assert!(table.openai[0].enabled);
+        assert!(!table.openai[1].enabled);
+        assert!(!table.legacy_openai);
+    }
+
+    #[test]
+    fn route_table_entries_round_trip_through_toml() {
+        let mut config = AppConfig::default();
+        config.route_tables.insert(
+            "main".to_string(),
+            RouteTable {
+                openai: vec![
+                    RouteTableEntry {
+                        id: "route-a".to_string(),
+                        enabled: true,
+                    },
+                    RouteTableEntry {
+                        id: "route-b".to_string(),
+                        enabled: false,
+                    },
+                ],
+                ..Default::default()
+            },
+        );
+
+        let text = toml::to_string_pretty(&config).expect("config serializes");
+        println!("--- serialized ---\n{text}--- end ---");
+
+        let parsed: AppConfig = toml::from_str(&text).expect("config re-parses");
+        let table = parsed.route_tables.get("main").expect("table exists");
+        assert_eq!(table.openai.len(), 2);
+        assert!(table.openai[0].enabled);
+        assert!(!table.openai[1].enabled);
+        assert!(!table.legacy_openai);
     }
 }

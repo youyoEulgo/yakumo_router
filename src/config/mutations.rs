@@ -1,4 +1,6 @@
-use crate::config::schema::{Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable};
+use crate::config::schema::{
+    Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable, RouteTableEntry,
+};
 use std::collections::HashMap;
 
 pub fn upsert_route(routes: &mut Vec<RouteRule>, route: RouteRule) -> bool {
@@ -19,8 +21,8 @@ pub fn delete_route(routes: &mut Vec<RouteRule>, id: &str) -> bool {
 
 pub fn delete_route_from_tables(route_tables: &mut HashMap<String, RouteTable>, id: &str) {
     for table in route_tables.values_mut() {
-        table.openai.retain(|route_id| route_id != id);
-        table.anthropic.retain(|route_id| route_id != id);
+        table.openai.retain(|entry| entry.id != id);
+        table.anthropic.retain(|entry| entry.id != id);
     }
 }
 
@@ -38,8 +40,30 @@ pub fn remove_provider_route_ids(
 ) {
     for table in route_tables.values_mut() {
         let route_ids = protocol.table_routes_mut(table);
-        route_ids.retain(|route_id| !removed_ids.contains(route_id));
+        route_ids.retain(|entry| !removed_ids.contains(&entry.id));
     }
+}
+
+pub fn add_route_table_entries(entries: &mut Vec<RouteTableEntry>, ids: &[String]) -> usize {
+    let mut added = 0;
+
+    for id in ids {
+        if !entries.iter().any(|entry| &entry.id == id) {
+            entries.push(RouteTableEntry {
+                id: id.clone(),
+                enabled: false,
+            });
+            added += 1;
+        }
+    }
+
+    added
+}
+
+pub fn remove_route_table_entries(entries: &mut Vec<RouteTableEntry>, ids: &[String]) -> usize {
+    let before = entries.len();
+    entries.retain(|entry| !ids.contains(&entry.id));
+    before - entries.len()
 }
 
 pub fn upsert_provider(
@@ -52,8 +76,12 @@ pub fn upsert_provider(
 
 #[cfg(test)]
 mod tests {
-    use super::{delete_provider, upsert_route};
-    use crate::config::schema::{MatchType, ProtocolConfig, ProviderConfig, RouteRule};
+    use super::{
+        add_route_table_entries, delete_provider, remove_route_table_entries, upsert_route,
+    };
+    use crate::config::schema::{
+        MatchType, ProtocolConfig, ProviderConfig, RouteRule, RouteTableEntry,
+    };
     use std::collections::HashMap;
 
     #[test]
@@ -152,5 +180,54 @@ mod tests {
         assert!(!config.providers.contains_key("openrouter"));
         assert_eq!(config.routes.len(), 1);
         assert_eq!(config.routes[0].provider, "deepseek");
+    }
+
+    #[test]
+    fn add_route_table_entries_appends_disabled_and_skips_existing() {
+        let mut entries = vec![RouteTableEntry {
+            id: "route-a".to_string(),
+            enabled: true,
+        }];
+
+        let added = add_route_table_entries(
+            &mut entries,
+            &[
+                "route-a".to_string(),
+                "route-b".to_string(),
+                "route-c".to_string(),
+            ],
+        );
+
+        assert_eq!(added, 2);
+        assert_eq!(entries.len(), 3);
+        assert_eq!(entries[0].id, "route-a");
+        assert!(entries[0].enabled);
+        assert_eq!(entries[1].id, "route-b");
+        assert!(!entries[1].enabled);
+        assert_eq!(entries[2].id, "route-c");
+        assert!(!entries[2].enabled);
+    }
+
+    #[test]
+    fn remove_route_table_entries_is_idempotent() {
+        let mut entries = vec![
+            RouteTableEntry {
+                id: "route-a".to_string(),
+                enabled: true,
+            },
+            RouteTableEntry {
+                id: "route-b".to_string(),
+                enabled: false,
+            },
+        ];
+
+        let removed = remove_route_table_entries(
+            &mut entries,
+            &["route-b".to_string(), "missing".to_string()],
+        );
+
+        assert_eq!(removed, 1);
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].id, "route-a");
     }
 }

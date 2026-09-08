@@ -1,17 +1,21 @@
 use crate::AppState;
 use crate::config::{
-    Protocol, ProviderConfig, RouteRule, RouteTable, create_minimal_config, delete_provider,
-    delete_route, delete_route_from_tables, remove_provider_route_ids, upsert_provider,
-    upsert_route,
+    AppConfig, Protocol, ProviderConfig, RouteRule, RouteTable, RouteTableEntry,
+    add_route_table_entries, create_minimal_config, delete_provider, delete_route,
+    delete_route_from_tables, remove_provider_route_ids, remove_route_table_entries,
+    upsert_provider, upsert_route,
 };
 use crate::proxy::parse_protocol;
 use crate::ui::dto::{
     ActiveRouteTableResult, ConfigFileStatus, CreateConfigResult, DeleteProviderResult,
-    DeleteRouteResult, DeleteRouteTableResult, ProviderTables, RouteTableList, RouteTables,
-    UpsertProviderResult, UpsertRouteResult, UpsertRouteTableResult,
+    DeleteRouteResult, DeleteRouteTableResult, ProviderTables, RouteTableList,
+    RouteTableMutationResult, RouteTables, UpsertProviderResult, UpsertRouteResult,
+    UpsertRouteTableResult,
 };
 use crate::ui::response::{json_response, read_json_body, save_config};
 use axum::{body::Body, extract::Path, extract::State, http::StatusCode, response::Response};
+use serde::Deserialize;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 pub async fn get_config_status_handler(
@@ -60,10 +64,42 @@ pub async fn list_route_tables_handler(
     let config = state.config.read().await;
     let tables = RouteTableList {
         active: config.active_route_table.clone(),
-        tables: config.route_tables.clone(),
+        tables: prune_route_tables(&config),
     };
 
     json_response(&tables, StatusCode::OK)
+}
+
+/// Drop entries that point at rules which no longer exist, so a hand-edited
+/// config cannot lock the UI out with rejected mutations.
+fn prune_route_tables(config: &AppConfig) -> HashMap<String, RouteTable> {
+    let openai_ids: HashSet<&str> = config
+        .openai
+        .routes
+        .iter()
+        .map(|route| route.id.as_str())
+        .collect();
+    let anthropic_ids: HashSet<&str> = config
+        .anthropic
+        .routes
+        .iter()
+        .map(|route| route.id.as_str())
+        .collect();
+
+    config
+        .route_tables
+        .iter()
+        .map(|(name, table)| {
+            let mut table = table.clone();
+            table
+                .openai
+                .retain(|entry| openai_ids.contains(entry.id.as_str()));
+            table
+                .anthropic
+                .retain(|entry| anthropic_ids.contains(entry.id.as_str()));
+            (name.clone(), table)
+        })
+        .collect()
 }
 
 pub async fn list_providers_handler(
@@ -201,8 +237,10 @@ pub async fn upsert_route_table_handler(
     let table: RouteTable = read_json_body(req).await?;
 
     let mut config = state.config.write().await;
-    if !route_table_ids_exist(&config.openai.routes, &table.openai)
-        || !route_table_ids_exist(&config.anthropic.routes, &table.anthropic)
+    if !route_table_entries_exist(&config.openai.routes, &table.openai)
+        || !route_table_entries_exist(&config.anthropic.routes, &table.anthropic)
+        || !route_table_entries_unique(&table.openai)
+        || !route_table_entries_unique(&table.anthropic)
     {
         return Err(StatusCode::BAD_REQUEST);
     }
@@ -218,6 +256,86 @@ pub async fn upsert_route_table_handler(
         name,
         table,
     };
+    json_response(&result, StatusCode::OK)
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "action", rename_all = "snake_case")]
+enum RouteTableMutation {
+    Add {
+        protocol: Protocol,
+        ids: Vec<String>,
+    },
+    Remove {
+        protocol: Protocol,
+        ids: Vec<String>,
+    },
+    Update {
+        protocol: Protocol,
+        entries: Vec<RouteTableEntry>,
+    },
+}
+
+pub async fn mutate_route_table_handler(
+    State(state): State<Arc<AppState>>,
+    Path(name): Path<String>,
+    req: axum::http::Request<Body>,
+) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
+    let mutation: RouteTableMutation = read_json_body(req).await?;
+    let mut config = state.config.write().await;
+
+    let name = match mutation {
+        RouteTableMutation::Add { protocol, ids } => {
+            let known_ids = known_route_ids(&config, protocol);
+            if !ids.iter().all(|id| known_ids.contains(id)) {
+                return Err(StatusCode::BAD_REQUEST);
+            }
+            let table = config
+                .route_tables
+                .get_mut(&name)
+                .ok_or(StatusCode::NOT_FOUND)?;
+            add_route_table_entries(protocol.table_routes_mut(table), &ids);
+            name
+        }
+        RouteTableMutation::Remove { protocol, ids } => {
+            let table = config
+                .route_tables
+                .get_mut(&name)
+                .ok_or(StatusCode::NOT_FOUND)?;
+            remove_route_table_entries(protocol.table_routes_mut(table), &ids);
+            name
+        }
+        RouteTableMutation::Update {
+            protocol,
+            entries: new_entries,
+        } => {
+            let known_ids = known_route_ids(&config, protocol);
+            if !new_entries
+                .iter()
+                .all(|entry| known_ids.contains(&entry.id))
+                || !route_table_entries_unique(&new_entries)
+            {
+                return Err(StatusCode::BAD_REQUEST);
+            }
+            let table = config
+                .route_tables
+                .get_mut(&name)
+                .ok_or(StatusCode::NOT_FOUND)?;
+            *protocol.table_routes_mut(table) = new_entries;
+            name
+        }
+    };
+
+    let table = config
+        .route_tables
+        .get(&name)
+        .cloned()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+    save_config(&state, &config)?;
+
+    let result = RouteTableMutationResult { name, table };
     json_response(&result, StatusCode::OK)
 }
 
@@ -286,11 +404,26 @@ fn validate_route(route: &RouteRule) -> Result<(), StatusCode> {
     Ok(())
 }
 
-fn route_table_ids_exist(routes: &[RouteRule], ids: &[String]) -> bool {
-    ids.iter()
-        .all(|id| routes.iter().any(|route| &route.id == id))
+fn route_table_entries_exist(routes: &[RouteRule], entries: &[RouteTableEntry]) -> bool {
+    entries
+        .iter()
+        .all(|entry| routes.iter().any(|route| route.id == entry.id))
+}
+
+fn route_table_entries_unique(entries: &[RouteTableEntry]) -> bool {
+    let mut seen = HashSet::new();
+    entries.iter().all(|entry| seen.insert(entry.id.as_str()))
 }
 
 fn route_id_exists(routes: &[RouteRule], id: &str) -> bool {
     routes.iter().any(|route| route.id == id)
+}
+
+fn known_route_ids(config: &AppConfig, protocol: Protocol) -> Vec<String> {
+    protocol
+        .config(config)
+        .routes
+        .iter()
+        .map(|route| route.id.clone())
+        .collect()
 }

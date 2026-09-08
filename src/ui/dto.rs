@@ -57,6 +57,12 @@ pub struct UpsertRouteTableResult {
 }
 
 #[derive(Serialize)]
+pub struct RouteTableMutationResult {
+    pub name: String,
+    pub table: RouteTable,
+}
+
+#[derive(Serialize)]
 pub struct ActiveRouteTableResult {
     pub active: Option<String>,
 }

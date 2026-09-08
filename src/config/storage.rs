@@ -1,4 +1,4 @@
-use crate::config::schema::AppConfig;
+use crate::config::schema::{AppConfig, RouteTableEntry};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -42,8 +42,14 @@ model = "deepseek-v4-pro"
 forward_only = false
 
 [route_tables.default]
-openai = ["openai-gpt"]
-anthropic = ["anthropic-sonnet"]
+
+[[route_tables.default.openai]]
+id = "openai-gpt"
+enabled = true
+
+[[route_tables.default.anthropic]]
+id = "anthropic-sonnet"
+enabled = true
 "#;
 
 pub const MINIMAL_CONFIG: &str = r#"[server]
@@ -61,7 +67,49 @@ pub fn config_path(data_dir: &Path) -> PathBuf {
 
 pub fn load_config(config_path: &Path) -> Result<AppConfig, BoxError> {
     let config_text = fs::read_to_string(config_path)?;
-    Ok(toml::from_str(&config_text)?)
+    let mut config: AppConfig = toml::from_str(&config_text)?;
+    migrate_legacy_route_tables(&mut config);
+    Ok(config)
+}
+
+fn seed_missing_entries(entries: &mut Vec<RouteTableEntry>, known_ids: &[String]) {
+    for id in known_ids {
+        if !entries.iter().any(|entry| &entry.id == id) {
+            entries.push(RouteTableEntry {
+                id: id.clone(),
+                enabled: false,
+            });
+        }
+    }
+}
+
+/// Old configs stored only the enabled rule ids, so rules that were disabled are
+/// absent from the file. Backfill them as disabled entries once, so a table keeps
+/// showing the same rows it did before the format change.
+pub fn migrate_legacy_route_tables(config: &mut AppConfig) {
+    let openai_ids: Vec<String> = config
+        .openai
+        .routes
+        .iter()
+        .map(|route| route.id.clone())
+        .collect();
+    let anthropic_ids: Vec<String> = config
+        .anthropic
+        .routes
+        .iter()
+        .map(|route| route.id.clone())
+        .collect();
+
+    for table in config.route_tables.values_mut() {
+        if table.legacy_openai {
+            seed_missing_entries(&mut table.openai, &openai_ids);
+            table.legacy_openai = false;
+        }
+        if table.legacy_anthropic {
+            seed_missing_entries(&mut table.anthropic, &anthropic_ids);
+            table.legacy_anthropic = false;
+        }
+    }
 }
 
 pub fn load_or_default_config(config_path: &Path) -> Result<AppConfig, BoxError> {
@@ -147,5 +195,51 @@ pub fn resolve_config_path(data_dir: &Path, path: &Path) -> PathBuf {
         path.to_path_buf()
     } else {
         data_dir.join(path)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::migrate_legacy_route_tables;
+    use crate::config::schema::{AppConfig, MatchType, RouteRule, RouteTable, RouteTableEntry};
+
+    fn route(id: &str) -> RouteRule {
+        RouteRule {
+            id: id.to_string(),
+            matcher: id.to_string(),
+            match_type: MatchType::Contains,
+            provider: "provider".to_string(),
+            model: "model".to_string(),
+            forward_only: false,
+        }
+    }
+
+    #[test]
+    fn migration_seeds_missing_rules_as_disabled_entries() {
+        let mut config = AppConfig::default();
+        config.openai.routes = vec![route("a"), route("b"), route("c")];
+        config.route_tables.insert(
+            "main".to_string(),
+            RouteTable {
+                openai: vec![RouteTableEntry {
+                    id: "b".to_string(),
+                    enabled: true,
+                }],
+                legacy_openai: true,
+                ..Default::default()
+            },
+        );
+
+        migrate_legacy_route_tables(&mut config);
+
+        let table = config.route_tables.get("main").expect("table exists");
+        assert_eq!(table.openai.len(), 3);
+        assert_eq!(table.openai[0].id, "b");
+        assert!(table.openai[0].enabled);
+        assert_eq!(table.openai[1].id, "a");
+        assert!(!table.openai[1].enabled);
+        assert_eq!(table.openai[2].id, "c");
+        assert!(!table.openai[2].enabled);
+        assert!(!table.legacy_openai);
     }
 }

@@ -54,8 +54,11 @@ function routeTableEntries(): string[] {
   return Object.keys(props.routeTables.tables).sort((left, right) => left.localeCompare(right));
 }
 
-function routeTableRuleCount(name: string, protocol: Protocol): number {
-  return props.routeTables.tables[name]?.[protocol].length ?? 0;
+function routeTableRuleCount(name: string, protocol: Protocol): string {
+  const entries = props.routeTables.tables[name]?.[protocol] ?? [];
+  const enabled = entries.filter((entry) => entry.enabled).length;
+
+  return `${enabled}/${entries.length}`;
 }
 </script>
 

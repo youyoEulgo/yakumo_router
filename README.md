@@ -6,10 +6,6 @@ Yakumo Router is a small reverse proxy for routing OpenAI-compatible and
 Anthropic-compatible API requests to different upstream providers by model name.
 It includes a Web UI for managing providers, routing rules, and route tables.
 
-The name is inspired by Yakumo Yukari's boundary/gap motif: Yakumo Router sits
-on the boundary between clients and model providers, deciding which upstream a
-request should cross into.
-
 Yakumo Router does not translate protocols:
 
 ```text
@@ -135,11 +131,11 @@ cargo run
 
 The config file is stored in the user data directory:
 
-| OS | Directory |
-|----|-----------|
+| OS          | Directory                                                          |
+| ----------- | ------------------------------------------------------------------ |
 | Linux / BSD | `~/.local/share/yakumo_router/` or `$XDG_DATA_HOME/yakumo_router/` |
-| macOS | `~/Library/Application Support/yakumo_router/` |
-| Windows | `%APPDATA%\yakumo_router\` |
+| macOS       | `~/Library/Application Support/yakumo_router/`                     |
+| Windows     | `%APPDATA%\yakumo_router\`                                         |
 
 Default config path:
 
@@ -203,8 +199,14 @@ model = "deepseek-v4-pro"
 forward_only = false
 
 [route_tables.default]
-openai = ["openai-gpt"]
-anthropic = ["anthropic-sonnet"]
+
+[[route_tables.default.openai]]
+id = "openai-gpt"
+enabled = true
+
+[[route_tables.default.anthropic]]
+id = "anthropic-sonnet"
+enabled = true
 ```
 
 ### Field Reference
@@ -257,7 +259,10 @@ anthropic = ["anthropic-sonnet"]
   rewriting the model field.
 
 `route_tables.<name>.openai` / `route_tables.<name>.anthropic`
-: Ordered rule ID lists. Earlier rules have higher priority.
+: Ordered entries that decide which rules this table can use. Each entry has an
+  `id` and an `enabled` flag. Rules missing from the list are not visible to the
+  table, and only enabled entries take part in matching. Among enabled entries,
+  earlier ones have higher priority.
 
 ## Routing Model
 
@@ -266,7 +271,7 @@ For each request, Yakumo Router:
 1. Detects whether it is OpenAI-compatible or Anthropic-compatible.
 2. Reads the request's `model`.
 3. Looks up rules for the same protocol.
-4. Checks the active route table order first, if one is configured.
+4. Checks the active route table's enabled entries first, in their configured order.
 5. Selects the first matching rule.
 6. Rewrites `model` unless `forward_only = true`.
 7. Forwards the request to the rule's provider.
@@ -287,6 +292,7 @@ Use it to:
 - Manage OpenAI-compatible and Anthropic-compatible providers
 - Add, edit, and delete routing rules
 - Manage route tables
+- Add rules to a route table and enable each one individually
 - Activate a route table
 - Drag rules to change priority inside a route table
 - Switch between English and Chinese

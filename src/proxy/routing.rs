@@ -78,7 +78,7 @@ fn find_route<'a>(
     protocol_config: &'a ProtocolConfig,
     model: &str,
 ) -> Option<&'a RouteRule> {
-    let active_ids = config
+    let active_entries = config
         .active_route_table
         .as_deref()
         .and_then(|name| config.route_tables.get(name))
@@ -87,13 +87,16 @@ fn find_route<'a>(
             Protocol::Anthropic => table.anthropic.as_slice(),
         });
 
-    if let Some(active_ids) = active_ids {
-        return active_ids.iter().find_map(|id| {
-            protocol_config
-                .routes
-                .iter()
-                .find(|route| &route.id == id && route_matches(route, model))
-        });
+    if let Some(entries) = active_entries {
+        return entries
+            .iter()
+            .filter(|entry| entry.enabled)
+            .find_map(|entry| {
+                protocol_config
+                    .routes
+                    .iter()
+                    .find(|route| route.id == entry.id && route_matches(route, model))
+            });
     }
 
     protocol_config
@@ -129,6 +132,7 @@ mod tests {
     use super::{find_route, route_request};
     use crate::config::{
         AppConfig, MatchType, Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable,
+        RouteTableEntry,
     };
     use std::collections::HashMap;
 
@@ -225,8 +229,17 @@ mod tests {
         config.route_tables.insert(
             "main".to_string(),
             RouteTable {
-                openai: vec!["specific".to_string(), "broad".to_string()],
-                anthropic: Vec::new(),
+                openai: vec![
+                    RouteTableEntry {
+                        id: "specific".to_string(),
+                        enabled: true,
+                    },
+                    RouteTableEntry {
+                        id: "broad".to_string(),
+                        enabled: true,
+                    },
+                ],
+                ..Default::default()
             },
         );
 
@@ -234,6 +247,50 @@ mod tests {
             .expect("route should match");
 
         assert_eq!(matched.id, "specific");
+    }
+
+    #[test]
+    fn disabled_route_table_entry_is_skipped() {
+        let mut config = app_config(vec![
+            RouteRule {
+                id: "broad".to_string(),
+                matcher: "gpt".to_string(),
+                match_type: MatchType::Contains,
+                provider: "provider".to_string(),
+                model: "broad-upstream".to_string(),
+                forward_only: false,
+            },
+            RouteRule {
+                id: "specific".to_string(),
+                matcher: "gpt-4.1".to_string(),
+                match_type: MatchType::Exact,
+                provider: "provider".to_string(),
+                model: "specific-upstream".to_string(),
+                forward_only: false,
+            },
+        ]);
+        config.active_route_table = Some("main".to_string());
+        config.route_tables.insert(
+            "main".to_string(),
+            RouteTable {
+                openai: vec![
+                    RouteTableEntry {
+                        id: "specific".to_string(),
+                        enabled: false,
+                    },
+                    RouteTableEntry {
+                        id: "broad".to_string(),
+                        enabled: true,
+                    },
+                ],
+                ..Default::default()
+            },
+        );
+
+        let matched = find_route(&config, Protocol::OpenAi, &config.openai, "gpt-4.1")
+            .expect("route should match");
+
+        assert_eq!(matched.id, "broad");
     }
 
     fn app_config(routes: Vec<RouteRule>) -> AppConfig {

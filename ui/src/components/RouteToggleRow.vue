@@ -18,6 +18,7 @@ const emit = defineEmits<{
   dragstart: [event: DragEvent];
   drop: [event: DragEvent];
   move: [direction: -1 | 1];
+  remove: [];
   toggle: [enabled: boolean];
 }>();
 
@@ -67,7 +68,7 @@ function onRouteToggle(event: Event): void {
       <button
         type="button"
         class="ghost-button compact"
-        :disabled="disabled || !enabled"
+        :disabled="disabled"
         :title="t('moveUp')"
         :aria-label="t('moveUp')"
         @click="emit('move', -1)"
@@ -77,12 +78,22 @@ function onRouteToggle(event: Event): void {
       <button
         type="button"
         class="ghost-button compact"
-        :disabled="disabled || !enabled"
+        :disabled="disabled"
         :title="t('moveDown')"
         :aria-label="t('moveDown')"
         @click="emit('move', 1)"
       >
         ↓
+      </button>
+      <button
+        type="button"
+        class="ghost-button compact remove-button"
+        :disabled="disabled"
+        :title="t('removeFromTable')"
+        :aria-label="t('removeFromTable')"
+        @click="emit('remove')"
+      >
+        ✕
       </button>
     </div>
   </div>
@@ -250,5 +261,14 @@ function onRouteToggle(event: Event): void {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.remove-button {
+  color: #b23b3b;
+}
+
+.remove-button:hover:not(:disabled) {
+  border-color: rgba(178, 59, 59, 0.36);
+  background: rgba(178, 59, 59, 0.08);
 }
 </style>

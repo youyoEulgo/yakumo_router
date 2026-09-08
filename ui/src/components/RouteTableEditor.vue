@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { reactive } from 'vue';
 import { useRouteDragSort } from '../composables/useRouteDragSort';
 import { protocolLabel, useI18n } from '../i18n';
-import type { Protocol, RouteRule, RouteTable } from '../types';
+import type { Protocol, RouteRule, RouteTable, RouteTableEntry } from '../types';
+import RouteRulePicker from './RouteRulePicker.vue';
 import RouteTableForm from './RouteTableForm.vue';
 import RouteToggleRow from './RouteToggleRow.vue';
 
@@ -19,34 +21,50 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:routeTableName': [name: string];
   activate: [];
+  addRoutes: [protocol: Protocol, ids: string[]];
   delete: [];
+  moveRoute: [protocol: Protocol, routeId: string, direction: -1 | 1];
+  removeRoute: [protocol: Protocol, routeId: string];
   save: [];
   toggleRoute: [protocol: Protocol, routeId: string, enabled: boolean];
-  moveRoute: [protocol: Protocol, routeId: string, direction: -1 | 1];
 }>();
 
 const { t } = useI18n();
 
-function routeEnabled(table: RouteTable | undefined, protocol: Protocol, routeId: string): boolean {
-  return table?.[protocol].includes(routeId) ?? false;
+const pickerOpen = reactive<Record<Protocol, boolean>>({
+  openai: false,
+  anthropic: false,
+});
+
+type VisibleRoute = {
+  entry: RouteTableEntry;
+  route: RouteRule;
+};
+
+function visibleRoutes(protocol: Protocol): VisibleRoute[] {
+  const entries = props.routeTable?.[protocol] ?? [];
+
+  return entries
+    .map((entry) => ({
+      entry,
+      route: props.routes[protocol].find((route) => route.id === entry.id),
+    }))
+    .filter((item): item is VisibleRoute => Boolean(item.route));
 }
 
-function orderedRoutes(
-  table: RouteTable | undefined,
-  allRoutes: Record<Protocol, RouteRule[]>,
-  protocol: Protocol,
-): RouteRule[] {
-  const ids = table?.[protocol] ?? [];
-  const enabled = ids
-    .map((id) => allRoutes[protocol].find((route) => route.id === id))
-    .filter((route): route is RouteRule => Boolean(route));
-  const disabled = allRoutes[protocol].filter((route) => !routeEnabled(table, protocol, route.id));
-
-  return [...enabled, ...disabled];
+function visibleRouteIds(protocol: Protocol): string[] {
+  return (props.routeTable?.[protocol] ?? []).map((entry) => entry.id);
 }
 
-function enabledRouteIds(protocol: Protocol): string[] {
-  return props.routeTable?.[protocol] ?? [];
+function availableRoutes(protocol: Protocol): RouteRule[] {
+  const visibleIds = visibleRouteIds(protocol);
+
+  return props.routes[protocol].filter((route) => !visibleIds.includes(route.id));
+}
+
+function onAddRoutes(protocol: Protocol, ids: string[]): void {
+  pickerOpen[protocol] = false;
+  emit('addRoutes', protocol, ids);
 }
 
 const {
@@ -58,10 +76,9 @@ const {
   onDragStart,
   onDrop,
 } = useRouteDragSort({
-  canDragRoute: (protocol, routeId) =>
-    !props.saving && routeEnabled(props.routeTable, protocol, routeId),
-  enabledRouteIds,
+  canDragRoute: () => !props.saving,
   moveRoute: (protocol, routeId, direction) => emit('moveRoute', protocol, routeId, direction),
+  routeIds: (protocol) => visibleRouteIds(protocol),
 });
 </script>
 
@@ -103,27 +120,47 @@ const {
           :key="protocol"
           class="route-table-section"
         >
-          <h3>{{ t('rulesSection', { protocol: protocolLabel(protocol) }) }}</h3>
-          <div v-if="routes[protocol].length === 0" class="empty-state">
-            {{ t('noRules') }}
+          <div class="route-table-section-header">
+            <h3>{{ t('rulesSection', { protocol: protocolLabel(protocol) }) }}</h3>
+            <button
+              class="ghost-button compact"
+              type="button"
+              :disabled="!selectedRouteTable || saving"
+              @click="pickerOpen[protocol] = !pickerOpen[protocol]"
+            >
+              {{ t('addRules') }}
+            </button>
+          </div>
+
+          <RouteRulePicker
+            v-if="pickerOpen[protocol]"
+            :disabled="saving"
+            :routes="availableRoutes(protocol)"
+            @add="onAddRoutes(protocol, $event)"
+            @cancel="pickerOpen[protocol] = false"
+          />
+
+          <div v-if="visibleRoutes(protocol).length === 0" class="empty-state">
+            {{ routes[protocol].length === 0 ? t('noRules') : t('noVisibleRules') }}
           </div>
           <div v-else class="route-toggle-list">
             <RouteToggleRow
-              v-for="route in orderedRoutes(routeTable, routes, protocol)"
-              :key="route.id"
+              v-for="item in visibleRoutes(protocol)"
+              :key="item.route.id"
               :disabled="saving"
-              :draggable="routeEnabled(routeTable, protocol, route.id) && !saving"
-              :dragging="isDragging(protocol, route.id)"
-              :drop-placement="dropPlacement(protocol, route.id)"
-              :enabled="routeEnabled(routeTable, protocol, route.id)"
-              :route="route"
+              :draggable="!saving"
+              :dragging="isDragging(protocol, item.route.id)"
+              :drop-placement="dropPlacement(protocol, item.route.id)"
+              :enabled="item.entry.enabled"
+              :route="item.route"
               @dragend="clearDragState"
               @dragleave="clearDropTarget"
-              @dragover="onDragOver(protocol, route.id, $event)"
-              @dragstart="onDragStart(protocol, route.id, $event)"
-              @drop="onDrop(protocol, route.id, $event)"
-              @move="emit('moveRoute', protocol, route.id, $event)"
-              @toggle="emit('toggleRoute', protocol, route.id, $event)"
+              @dragover="onDragOver(protocol, item.route.id, $event)"
+              @dragstart="onDragStart(protocol, item.route.id, $event)"
+              @drop="onDrop(protocol, item.route.id, $event)"
+              @move="emit('moveRoute', protocol, item.route.id, $event)"
+              @remove="emit('removeRoute', protocol, item.route.id)"
+              @toggle="emit('toggleRoute', protocol, item.route.id, $event)"
             />
           </div>
         </section>
@@ -203,5 +240,12 @@ const {
   color: #334155;
   font-size: 13px;
   line-height: 1.3;
+}
+
+.route-table-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 </style>

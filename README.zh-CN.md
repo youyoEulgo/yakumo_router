@@ -4,8 +4,6 @@
 
 Yakumo Router 是一个用于 OpenAI-compatible / Anthropic-compatible API 的模型路由代理。它会根据请求里的模型名，把请求转发到不同的上游 provider，并提供一个内置 Web UI 来管理 provider、规则和路由表。
 
-项目名取自八云紫的“界线 / 隙间”意象：Yakumo Router 位于客户端和模型供应商之间的边界上，决定一次请求应该穿过哪条“隙间”。
-
 Yakumo Router 不做协议转换：
 
 ```text
@@ -129,11 +127,11 @@ cargo run
 
 配置文件会写入用户数据目录：
 
-| 系统 | 目录 |
-|----|-----------|
+| 系统        | 目录                                                               |
+| ----------- | ------------------------------------------------------------------ |
 | Linux / BSD | `~/.local/share/yakumo_router/` 或 `$XDG_DATA_HOME/yakumo_router/` |
-| macOS | `~/Library/Application Support/yakumo_router/` |
-| Windows | `%APPDATA%\yakumo_router\` |
+| macOS       | `~/Library/Application Support/yakumo_router/`                     |
+| Windows     | `%APPDATA%\yakumo_router\`                                         |
 
 默认配置路径：
 
@@ -197,8 +195,14 @@ model = "deepseek-v4-pro"
 forward_only = false
 
 [route_tables.default]
-openai = ["openai-gpt"]
-anthropic = ["anthropic-sonnet"]
+
+[[route_tables.default.openai]]
+id = "openai-gpt"
+enabled = true
+
+[[route_tables.default.anthropic]]
+id = "anthropic-sonnet"
+enabled = true
 ```
 
 ### 字段说明
@@ -249,7 +253,7 @@ anthropic = ["anthropic-sonnet"]
 : 为 true 时只选择 provider，不改写模型名。
 
 `route_tables.<name>.openai` / `route_tables.<name>.anthropic`
-: 有序规则 ID 列表。越靠前优先级越高。
+: 该路由表可用的规则条目，按顺序排列。每个条目包含 `id` 和 `enabled`。不在列表里的规则对该路由表不可见，只有 `enabled = true` 的条目参与匹配；在启用条目中越靠前优先级越高。
 
 ## 路由逻辑
 
@@ -258,7 +262,7 @@ anthropic = ["anthropic-sonnet"]
 1. 判断请求是 OpenAI-compatible 还是 Anthropic-compatible。
 2. 读取请求里的 `model`。
 3. 查找同协议下的规则。
-4. 如果配置了激活路由表，优先按路由表顺序匹配。
+4. 如果配置了激活路由表，优先按该路由表中已启用条目的顺序匹配。
 5. 选中第一条命中的规则。
 6. 如果 `forward_only = false`，改写请求里的 `model`。
 7. 转发到规则指定的 provider。
@@ -279,6 +283,7 @@ http://127.0.0.1:8989/_ui/
 - 管理 OpenAI-compatible / Anthropic-compatible providers
 - 添加、编辑和删除路由规则
 - 管理路由表
+- 向路由表添加规则，并单独启用某条规则
 - 激活路由表
 - 拖拽调整路由表内规则优先级
 - 切换中文 / 英文

@@ -15,6 +15,7 @@ const {
   activatingRouteTable,
   activePane,
   activeProtocol,
+  addRoutesToTable,
   configExists,
   createConfig,
   creatingConfig,
@@ -60,6 +61,7 @@ const {
   totalRouteTables,
   updateProviderField,
   updateRouteField,
+  removeRouteFromTable,
   resetRouteTableForm,
   applyRouteTable,
   applyRoute,
@@ -136,7 +138,9 @@ const {
             :saving="savingRouteTable"
             :selected-route-table="selectedRouteTable"
             @activate="activateRouteTable"
+            @add-routes="addRoutesToTable"
             @delete="deleteSelectedRouteTable"
+            @remove-route="removeRouteFromTable"
             @save="saveRouteTable"
             @toggle-route="toggleRouteInTable"
             @move-route="moveRouteInTable"

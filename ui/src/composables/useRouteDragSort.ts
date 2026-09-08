@@ -12,15 +12,11 @@ type DropTarget = RouteDragItem & {
 
 type RouteDragSortOptions = {
   canDragRoute: (protocol: Protocol, routeId: string) => boolean;
-  enabledRouteIds: (protocol: Protocol) => string[];
+  routeIds: (protocol: Protocol) => string[];
   moveRoute: (protocol: Protocol, routeId: string, direction: -1 | 1) => void;
 };
 
-export function useRouteDragSort({
-  canDragRoute,
-  enabledRouteIds,
-  moveRoute,
-}: RouteDragSortOptions) {
+export function useRouteDragSort({ canDragRoute, routeIds, moveRoute }: RouteDragSortOptions) {
   const draggingRoute = ref<RouteDragItem | null>(null);
   const dropTarget = ref<DropTarget | null>(null);
 
@@ -65,7 +61,7 @@ export function useRouteDragSort({
       return;
     }
 
-    const ids = enabledRouteIds(protocol);
+    const ids = routeIds(protocol);
     const fromIndex = ids.indexOf(dragged.routeId);
     const targetIndex = ids.indexOf(targetRouteId);
     if (fromIndex === -1 || targetIndex === -1) {

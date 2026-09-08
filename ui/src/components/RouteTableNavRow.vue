@@ -4,11 +4,11 @@ import './sidebar-nav-row.css';
 defineProps<{
   active: boolean;
   activeLabel: string;
-  anthropicRuleCount: number;
+  anthropicRuleCount: string;
   anthropicRulesLabel: string;
   inactiveLabel: string;
   name: string;
-  openaiRuleCount: number;
+  openaiRuleCount: string;
   openaiRulesLabel: string;
   selected: boolean;
 }>();

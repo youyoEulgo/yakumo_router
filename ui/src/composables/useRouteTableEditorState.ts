@@ -2,8 +2,10 @@ import { computed, reactive, ref } from 'vue';
 import {
   activateRouteTable as activateRouteTableApi,
   deleteRouteTable as deleteRouteTableApi,
+  mutateRouteTable as mutateRouteTableApi,
   saveRouteTable as saveRouteTableApi,
 } from '../api';
+import type { RouteTableMutation } from '../api';
 import type { EditorPane, Protocol, RouteTable, RouteTableState } from '../types';
 
 type RouteTableEditorStateOptions = {
@@ -74,21 +76,36 @@ export function useRouteTableEditorState({
     }
   }
 
-  async function persistSelectedRouteTableChange(): Promise<void> {
-    if (!selectedRouteTable.value || !selectedTable.value) {
+  async function applyRouteTableMutation(mutation: RouteTableMutation): Promise<void> {
+    const name = selectedRouteTable.value;
+    if (!name) {
       return;
     }
 
     savingRouteTable.value = true;
 
     try {
-      await saveRouteTableApi(selectedRouteTable.value, selectedTable.value);
+      const result = await mutateRouteTableApi(name, mutation);
+      routeTableState.tables[result.name] = result.table;
       onStatus(t('routeTableSaved'));
     } catch (error) {
       onError(error instanceof Error ? error.message : t('failedSaveRouteTable'));
+      await reload();
     } finally {
       savingRouteTable.value = false;
     }
+  }
+
+  async function addRoutesToTable(protocol: Protocol, ids: string[]): Promise<void> {
+    if (ids.length === 0) {
+      return;
+    }
+
+    await applyRouteTableMutation({ protocol, action: 'add', ids });
+  }
+
+  async function removeRouteFromTable(protocol: Protocol, routeId: string): Promise<void> {
+    await applyRouteTableMutation({ protocol, action: 'remove', ids: [routeId] });
   }
 
   async function toggleRouteInTable(
@@ -96,21 +113,18 @@ export function useRouteTableEditorState({
     routeId: string,
     enabled: boolean,
   ): Promise<void> {
-    if (!selectedTable.value) {
+    const table = selectedTable.value;
+    if (!table) {
       return;
     }
 
-    const ids = selectedTable.value[protocol];
-    const index = ids.indexOf(routeId);
-    if (enabled && index === -1) {
-      ids.push(routeId);
-    } else if (!enabled && index !== -1) {
-      ids.splice(index, 1);
-    } else {
+    const entry = table[protocol].find((item) => item.id === routeId);
+    if (!entry || entry.enabled === enabled) {
       return;
     }
 
-    await persistSelectedRouteTableChange();
+    entry.enabled = enabled;
+    await applyRouteTableMutation({ protocol, action: 'update', entries: table[protocol] });
   }
 
   async function moveRouteInTable(
@@ -118,20 +132,25 @@ export function useRouteTableEditorState({
     routeId: string,
     direction: -1 | 1,
   ): Promise<void> {
-    if (!selectedTable.value) {
+    const table = selectedTable.value;
+    if (!table) {
       return;
     }
 
-    const ids = selectedTable.value[protocol];
-    const index = ids.indexOf(routeId);
+    const entries = table[protocol];
+    const index = entries.findIndex((entry) => entry.id === routeId);
     const nextIndex = index + direction;
-    if (index === -1 || nextIndex < 0 || nextIndex >= ids.length) {
+    if (index === -1 || nextIndex < 0 || nextIndex >= entries.length) {
       return;
     }
 
-    ids.splice(index, 1);
-    ids.splice(nextIndex, 0, routeId);
-    await persistSelectedRouteTableChange();
+    const [moved] = entries.splice(index, 1);
+    if (moved === undefined) {
+      return;
+    }
+
+    entries.splice(nextIndex, 0, moved);
+    await applyRouteTableMutation({ protocol, action: 'update', entries });
   }
 
   async function saveRouteTable(): Promise<void> {
@@ -197,11 +216,13 @@ export function useRouteTableEditorState({
   return {
     activateRouteTable,
     activatingRouteTable,
+    addRoutesToTable,
     applyRouteTable,
     deleteSelectedRouteTable,
     deletingRouteTable,
     moveRouteInTable,
     reconcileRouteTableSelection,
+    removeRouteFromTable,
     resetRouteTableForm,
     routeTableName,
     saveRouteTable,
