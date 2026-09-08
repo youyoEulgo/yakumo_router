@@ -7,7 +7,7 @@ defineProps<{
 </script>
 
 <template>
-  <button type="button" class="nav-row new-row" :aria-label="label">
+  <button type="button" class="card-row nav-row new-row" :aria-label="label">
     <span class="new-row-plus" aria-hidden="true">+</span>
   </button>
 </template>

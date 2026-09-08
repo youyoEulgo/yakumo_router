@@ -71,7 +71,7 @@ function routeTableRuleCount(name: string, protocol: Protocol): string {
       :title="t('providersSection', { protocol: protocolLabel(protocol) })"
       @toggle="collapsed[protocol] = !collapsed[protocol]"
     >
-      <div v-if="loading" class="empty-state">{{ t('refreshing') }}...</div>
+      <div v-if="loading" class="empty-state">{{ t('refreshing') }}</div>
       <div v-else-if="providerEntries(protocol).length === 0" class="empty-state">
         {{ t('noProviders') }}
       </div>

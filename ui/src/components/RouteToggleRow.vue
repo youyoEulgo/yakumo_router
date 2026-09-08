@@ -31,7 +31,7 @@ function onRouteToggle(event: Event): void {
 
 <template>
   <div
-    class="route-toggle-row"
+    class="card-row route-toggle-row"
     :class="{
       draggable: props.draggable,
       dragging,
@@ -101,33 +101,9 @@ function onRouteToggle(event: Event): void {
 
 <style scoped>
 .route-toggle-row {
-  position: relative;
-  display: grid;
   grid-template-columns: 18px minmax(0, 1fr) auto;
-  gap: 6px;
   align-items: center;
-  width: 100%;
   min-height: 60px;
-  padding: 12px 13px;
-  text-align: left;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 253, 0.94)),
-    var(--surface-raised);
-  box-shadow: var(--shadow-sm);
-  transition:
-    border-color 0.16s ease,
-    background-color 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.16s ease;
-}
-
-.route-toggle-row:hover {
-  border-color: var(--accent-border);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .route-toggle-row.draggable {
@@ -171,7 +147,7 @@ function onRouteToggle(event: Event): void {
   align-content: center;
   width: 18px;
   min-height: 34px;
-  color: #8a95a7;
+  color: var(--text-soft);
 }
 
 .drag-handle span {
@@ -207,7 +183,7 @@ function onRouteToggle(event: Event): void {
   width: 42px;
   height: 24px;
   border-radius: 999px;
-  background: #c7d0dc;
+  background: var(--switch-track);
   box-shadow: inset 0 1px 2px rgba(18, 24, 38, 0.12);
   transition: background-color 0.16s ease;
 }
@@ -264,11 +240,11 @@ function onRouteToggle(event: Event): void {
 }
 
 .remove-button {
-  color: #b23b3b;
+  color: var(--danger);
 }
 
 .remove-button:hover:not(:disabled) {
-  border-color: rgba(178, 59, 59, 0.36);
-  background: rgba(178, 59, 59, 0.08);
+  border-color: var(--danger-border);
+  background: var(--danger-bg);
 }
 </style>

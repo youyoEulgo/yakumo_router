@@ -15,7 +15,7 @@ defineProps<{
 </script>
 
 <template>
-  <button type="button" class="nav-row" :class="{ active, selected }">
+  <button type="button" class="card-row nav-row" :class="{ active, selected }">
     <span class="nav-row-name">{{ name }}</span>
     <span class="nav-row-detail">
       {{ active ? activeLabel : inactiveLabel }}

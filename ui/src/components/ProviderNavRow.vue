@@ -12,7 +12,7 @@ defineProps<{
 </script>
 
 <template>
-  <button type="button" class="nav-row" :class="{ selected }">
+  <button type="button" class="card-row nav-row" :class="{ selected }">
     <span class="nav-row-name">{{ name }}</span>
     <span class="nav-row-detail">{{ provider.base_url }}</span>
     <span class="nav-row-count">{{ routeCount }} {{ routeCountLabel }}</span>

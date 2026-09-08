@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import SaveIcon from './SaveIcon.vue';
 import { useI18n } from '../i18n';
 import type { RouteRule } from '../types';
 
-defineProps<{
+const props = defineProps<{
   isEditingRoute: boolean;
   routeForm: RouteRule;
   savingRoute: boolean;
@@ -17,6 +18,17 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const matchPlaceholder = computed(() => {
+  switch (props.routeForm.match_type ?? 'contains') {
+    case 'exact':
+      return 'claude-3-5-sonnet';
+    case 'regex':
+      return '^claude-.*-(opus|sonnet)$';
+    default:
+      return 'gpt';
+  }
+});
 
 function updateRouteTextField(field: keyof RouteRule, event: Event): void {
   emit(
@@ -35,7 +47,7 @@ function updateForwardOnly(event: Event): void {
   <form class="form-grid" @submit.prevent="emit('saveRoute')">
     <label>
       <span>ID</span>
-      <div class="id-field">
+      <div class="field-row">
         <input
           :value="routeForm.id"
           required
@@ -62,9 +74,12 @@ function updateForwardOnly(event: Event): void {
         :value="routeForm.match"
         required
         autocomplete="off"
-        placeholder="gpt"
+        :placeholder="matchPlaceholder"
         @input="updateRouteTextField('match', $event)"
       />
+      <small v-if="routeForm.match_type === 'regex'" class="field-hint">
+        {{ t('regexFullMatchHint') }}
+      </small>
     </label>
 
     <label>
@@ -111,52 +126,11 @@ function updateForwardOnly(event: Event): void {
 </template>
 
 <style scoped>
-.form-grid {
-  display: grid;
-  max-width: 720px;
-  gap: 16px;
-}
-
-.form-grid label {
-  display: grid;
-  gap: 7px;
-  color: #425066;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.id-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.form-grid input,
-.form-grid select {
-  width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: inset 0 1px 0 rgba(18, 24, 38, 0.03);
-  transition:
-    border-color 0.16s ease,
-    box-shadow 0.16s ease,
-    background-color 0.16s ease;
-}
-
-.form-grid input:disabled {
-  color: var(--text-soft);
-  background: #eef2f6;
-}
-
-.form-grid input:focus,
-.form-grid select:focus {
-  border-color: var(--accent);
-  outline: 3px solid rgba(39, 100, 216, 0.16);
+.field-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .checkbox-row {

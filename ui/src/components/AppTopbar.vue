@@ -225,11 +225,6 @@ const emit = defineEmits<{
   background: var(--accent-soft);
 }
 
-.refresh-button {
-  min-width: 38px;
-  min-height: 38px;
-}
-
 h1,
 p {
   margin: 0;

@@ -247,6 +247,8 @@ enabled = true
 
 `match_type`
 : One of `contains`, `exact`, or `regex`. Matching is case-insensitive.
+  `contains` is a plain substring check, `exact` compares the whole model name,
+  and `regex` matches the whole model name (anchored; use `.*` for partial matches).
 
 `provider`
 : Provider name to route to. It must exist in the same protocol family.

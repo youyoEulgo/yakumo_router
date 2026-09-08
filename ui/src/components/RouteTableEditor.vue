@@ -190,54 +190,6 @@ const {
 </template>
 
 <style scoped>
-.panel {
-  display: grid;
-  gap: 18px;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(249, 251, 252, 0.86)), var(--surface);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    var(--shadow-sm);
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.panel-header h2,
-.panel-header p,
-.route-table-section h3 {
-  margin: 0;
-}
-
-.panel-header h2 {
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.3;
-  letter-spacing: 0;
-}
-
-.panel-note {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  min-height: 26px;
-  margin-top: 8px;
-  padding: 4px 8px;
-  color: #536276;
-  border-left: 3px solid var(--accent-border);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  background: rgba(237, 244, 255, 0.68);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .route-table-layout,
 .route-table-rules,
 .route-toggle-list,
@@ -257,7 +209,8 @@ const {
 }
 
 .route-table-section h3 {
-  color: #334155;
+  margin: 0;
+  color: var(--text-section);
   font-size: 13px;
   line-height: 1.3;
 }

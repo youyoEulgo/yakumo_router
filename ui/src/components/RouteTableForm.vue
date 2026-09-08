@@ -24,10 +24,10 @@ function updateRouteTableName(event: Event): void {
 </script>
 
 <template>
-  <form class="route-table-form" @submit.prevent="emit('save')">
+  <form class="form-grid" @submit.prevent="emit('save')">
     <label>
       <span>{{ t('name') }}</span>
-      <div class="name-field">
+      <div class="field-row">
         <input
           :value="routeTableName"
           required
@@ -64,57 +64,3 @@ function updateRouteTableName(event: Event): void {
     </div>
   </form>
 </template>
-
-<style scoped>
-.route-table-form {
-  display: grid;
-  max-width: 720px;
-  gap: 16px;
-}
-
-.route-table-form label {
-  display: grid;
-  gap: 7px;
-  color: #425066;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.name-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.route-table-form input {
-  width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: inset 0 1px 0 rgba(18, 24, 38, 0.03);
-  transition:
-    border-color 0.16s ease,
-    box-shadow 0.16s ease,
-    background-color 0.16s ease;
-}
-
-.route-table-form input:focus {
-  border-color: var(--accent);
-  outline: 3px solid rgba(39, 100, 216, 0.16);
-}
-
-.route-table-form input:disabled {
-  color: var(--text-soft);
-  background: #eef2f6;
-}
-
-@media (max-width: 900px) {
-  .route-table-form {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

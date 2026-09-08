@@ -98,7 +98,7 @@ const emit = defineEmits<{
           v-for="route in providerRoutes"
           :key="route.id"
           type="button"
-          class="route-row"
+          class="card-row route-row"
           :class="{ selected: selectedRouteId === route.id }"
           @click="emit('selectRoute', route)"
         >
@@ -110,7 +110,7 @@ const emit = defineEmits<{
         </button>
         <button
           type="button"
-          class="route-row new-row"
+          class="card-row route-row new-row"
           :aria-label="t('newRule')"
           @click="emit('resetRoute')"
         >
@@ -144,89 +144,6 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.panel {
-  display: grid;
-  gap: 18px;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(249, 251, 252, 0.86)), var(--surface);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    var(--shadow-sm);
-}
-
-.panel.muted {
-  opacity: 0.72;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.panel-header h2,
-.panel-header p {
-  margin: 0;
-}
-
-.panel-header h2 {
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.3;
-  letter-spacing: 0;
-}
-
-.panel-note {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  min-height: 26px;
-  margin-top: 8px;
-  padding: 4px 8px;
-  color: #536276;
-  border-left: 3px solid var(--accent-border);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  background: rgba(237, 244, 255, 0.68);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.collapsible-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 40px;
-  padding: 7px 8px;
-  color: inherit;
-  line-height: 1;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease;
-}
-
-.collapsible-header:hover:not(:disabled) {
-  color: var(--accent-strong);
-  background: rgba(237, 244, 255, 0.92);
-}
-
-.collapsible-header:focus-visible {
-  outline: 3px solid rgba(39, 100, 216, 0.16);
-}
-
-.collapsible-header:disabled {
-  cursor: default;
-  opacity: 1;
-}
-
 .rules-layout {
   display: grid;
   grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
@@ -241,39 +158,7 @@ const emit = defineEmits<{
 }
 
 .route-row {
-  position: relative;
-  display: grid;
-  gap: 6px;
-  width: 100%;
   min-height: 72px;
-  padding: 12px 13px;
-  text-align: left;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 253, 0.94)),
-    var(--surface-raised);
-  box-shadow: var(--shadow-sm);
-  transition:
-    border-color 0.16s ease,
-    background-color 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.16s ease;
-}
-
-.route-row:hover {
-  border-color: var(--accent-border);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-}
-
-.route-row.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow:
-    inset 4px 0 0 var(--accent),
-    var(--shadow-sm);
 }
 
 .route-id {
@@ -293,48 +178,6 @@ const emit = defineEmits<{
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.new-row {
-  place-items: center;
-  min-height: 56px;
-  color: var(--text-muted);
-  border-style: dashed;
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: none;
-}
-
-.new-row:hover {
-  color: var(--accent);
-  border-color: var(--accent-border);
-  background: var(--accent-soft);
-}
-
-.new-row-plus {
-  position: relative;
-  display: block;
-  width: 28px;
-  height: 28px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-size: 0;
-}
-
-.new-row-plus::before,
-.new-row-plus::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12px;
-  height: 2px;
-  border-radius: 999px;
-  background: currentColor;
-  content: '';
-  transform: translate(-50%, -50%);
-}
-
-.new-row-plus::after {
-  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 @media (max-width: 900px) {

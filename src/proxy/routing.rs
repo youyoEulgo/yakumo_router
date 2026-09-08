@@ -111,7 +111,7 @@ fn route_matches(route: &RouteRule, model: &str) -> bool {
     match route.match_type {
         MatchType::Contains => lower.contains(&matcher),
         MatchType::Exact => lower == matcher,
-        MatchType::Regex => RegexBuilder::new(&route.matcher)
+        MatchType::Regex => RegexBuilder::new(&format!(r"\A(?:{})\z", route.matcher))
             .case_insensitive(true)
             .build()
             .map(|regex| regex.is_match(model))
@@ -156,6 +156,36 @@ mod tests {
         let config = app_config(vec![RouteRule {
             id: "regex".to_string(),
             matcher: "^claude-(sonnet|opus)-\\d+$".to_string(),
+            match_type: MatchType::Regex,
+            provider: "provider".to_string(),
+            model: "upstream".to_string(),
+            forward_only: false,
+        }]);
+
+        assert!(find_route(&config, Protocol::OpenAi, &config.openai, "claude-sonnet-4").is_some());
+        assert!(find_route(&config, Protocol::OpenAi, &config.openai, "claude-haiku-4").is_none());
+    }
+
+    #[test]
+    fn regex_match_requires_the_whole_model_name() {
+        let config = app_config(vec![RouteRule {
+            id: "regex".to_string(),
+            matcher: "sonnet".to_string(),
+            match_type: MatchType::Regex,
+            provider: "provider".to_string(),
+            model: "upstream".to_string(),
+            forward_only: false,
+        }]);
+
+        assert!(find_route(&config, Protocol::OpenAi, &config.openai, "sonnet").is_some());
+        assert!(find_route(&config, Protocol::OpenAi, &config.openai, "claude-sonnet-4").is_none());
+    }
+
+    #[test]
+    fn regex_match_wildcards_allow_partial_matches() {
+        let config = app_config(vec![RouteRule {
+            id: "regex".to_string(),
+            matcher: ".*(?:opus|sonnet).*".to_string(),
             match_type: MatchType::Regex,
             provider: "provider".to_string(),
             model: "upstream".to_string(),

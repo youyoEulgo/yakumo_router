@@ -55,7 +55,7 @@ function submit(): void {
         </span>
       </label>
 
-      <div class="rule-picker-actions">
+      <div class="actions rule-picker-actions">
         <button
           class="primary-button compact"
           type="button"
@@ -127,10 +127,6 @@ function submit(): void {
 }
 
 .rule-picker-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
   padding-top: 2px;
 }
 </style>

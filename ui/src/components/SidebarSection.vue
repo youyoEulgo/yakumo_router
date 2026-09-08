@@ -12,7 +12,7 @@ const emit = defineEmits<{
 <template>
   <button
     type="button"
-    class="list-header collapsible-header"
+    class="collapsible-header list-header"
     :aria-expanded="!collapsed"
     @click="emit('toggle')"
   >
@@ -25,44 +25,10 @@ const emit = defineEmits<{
 
 <style scoped>
 .list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 40px;
   margin-top: 6px;
-  padding: 7px 8px;
-  color: inherit;
-  line-height: 1;
-  text-align: left;
-  border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease;
 }
 
 .list-header:first-child {
   margin-top: 0;
-}
-
-.list-header:hover:not(:disabled) {
-  color: var(--accent-strong);
-  background: rgba(237, 244, 255, 0.92);
-}
-
-.list-header:focus-visible {
-  outline: 3px solid rgba(39, 100, 216, 0.16);
-}
-
-.list-header h2 {
-  margin: 0;
-  flex: 1;
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.3;
-  letter-spacing: 0;
 }
 </style>

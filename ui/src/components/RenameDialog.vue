@@ -40,7 +40,7 @@ function submit(): void {
         <input v-model="value" required autocomplete="off" :disabled="saving" />
       </label>
 
-      <div class="dialog-actions">
+      <div class="actions dialog-actions">
         <button class="primary-button compact" type="submit" :disabled="!canSubmit">
           {{ saving ? t('saving') : t('confirm') }}
         </button>
@@ -92,33 +92,7 @@ function submit(): void {
   line-height: 1.5;
 }
 
-.dialog-field {
-  display: grid;
-  gap: 7px;
-  color: #425066;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.dialog-field input {
-  width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.dialog-field input:focus {
-  border-color: var(--accent);
-  outline: 3px solid rgba(39, 100, 216, 0.16);
-}
-
 .dialog-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   justify-content: flex-end;
 }
 </style>

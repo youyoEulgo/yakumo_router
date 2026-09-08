@@ -242,6 +242,8 @@ enabled = true
 
 `match_type`
 : `contains`、`exact` 或 `regex`。匹配不区分大小写。
+  `contains` 是纯文本子串匹配，`exact` 比较整个模型名，`regex` 对整个模型名做正则匹配
+  （自动加锚点，要部分匹配请写 `.*`）。
 
 `provider`
 : 命中规则后要使用的 provider 名称。必须属于同一个协议。
