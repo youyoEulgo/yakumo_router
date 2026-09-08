@@ -130,12 +130,14 @@ const {
           <div class="route-table-section-header">
             <h3>{{ t('rulesSection', { protocol: protocolLabel(protocol) }) }}</h3>
             <button
-              class="ghost-button compact"
+              class="ghost-button compact add-rules-button"
               type="button"
+              :aria-label="t('addRules')"
+              :title="t('addRules')"
               :disabled="!selectedRouteTable || saving"
               @click="pickerOpen[protocol] = !pickerOpen[protocol]"
             >
-              {{ t('addRules') }}
+              <span class="add-rules-plus" aria-hidden="true"></span>
             </button>
           </div>
 
@@ -265,5 +267,44 @@ const {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.ghost-button.add-rules-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.ghost-button.add-rules-button:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.add-rules-plus {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.add-rules-plus::before,
+.add-rules-plus::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+  transform: translate(-50%, -50%);
+}
+
+.add-rules-plus::after {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 </style>

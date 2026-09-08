@@ -107,6 +107,11 @@ function updateRouteTableName(event: Event): void {
   outline: 3px solid rgba(39, 100, 216, 0.16);
 }
 
+.route-table-form input:disabled {
+  color: var(--text-soft);
+  background: #eef2f6;
+}
+
 @media (max-width: 900px) {
   .route-table-form {
     grid-template-columns: 1fr;
