@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import ProviderForm from './ProviderForm.vue';
+import RenameDialog from './RenameDialog.vue';
 import RouteRuleForm from './RouteRuleForm.vue';
 import { protocolLabel, useI18n } from '../i18n';
 import type { Protocol, RouteRule } from '../types';
@@ -16,6 +17,8 @@ defineProps<{
     api_key: string;
   };
   providerRoutes: RouteRule[];
+  renameRouteDialogOpen: boolean;
+  renamingRoute: boolean;
   routeEditorOpen: boolean;
   routeForm: RouteRule;
   savingProvider: boolean;
@@ -37,6 +40,9 @@ const emit = defineEmits<{
   selectRoute: [route: RouteRule];
   saveRoute: [];
   deleteRoute: [];
+  openRenameRouteDialog: [];
+  closeRenameRouteDialog: [];
+  renameRoute: [id: string];
 }>();
 </script>
 
@@ -119,10 +125,22 @@ const emit = defineEmits<{
         :saving-route="savingRoute"
         @save-route="emit('saveRoute')"
         @delete-route="emit('deleteRoute')"
+        @rename-route="emit('openRenameRouteDialog')"
         @update-route-field="(field, value) => emit('updateRouteField', field, value)"
       />
     </div>
   </section>
+
+  <RenameDialog
+    v-if="renameRouteDialogOpen"
+    :current-value="routeForm.id"
+    :label="t('newId')"
+    :note="t('renameRuleNote', { id: routeForm.id })"
+    :saving="renamingRoute"
+    :title="t('renameRule')"
+    @cancel="emit('closeRenameRouteDialog')"
+    @confirm="(id) => emit('renameRoute', id)"
+  />
 </template>
 
 <style scoped>

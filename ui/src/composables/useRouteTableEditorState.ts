@@ -32,6 +32,8 @@ export function useRouteTableEditorState({
   const savingRouteTable = ref(false);
   const activatingRouteTable = ref(false);
   const deletingRouteTable = ref(false);
+  const renamingRouteTable = ref(false);
+  const renameRouteTableDialogOpen = ref(false);
   const draftRouteTable = reactive<RouteTable>({
     openai: [],
     anthropic: [],
@@ -175,6 +177,45 @@ export function useRouteTableEditorState({
     }
   }
 
+  function openRenameRouteTableDialog(): void {
+    if (!selectedRouteTable.value) {
+      return;
+    }
+
+    renameRouteTableDialogOpen.value = true;
+  }
+
+  function closeRenameRouteTableDialog(): void {
+    renameRouteTableDialogOpen.value = false;
+  }
+
+  async function renameSelectedRouteTable(newName: string): Promise<void> {
+    const name = selectedRouteTable.value;
+    const nextName = newName.trim();
+    if (!name || !nextName || nextName === name) {
+      renameRouteTableDialogOpen.value = false;
+      return;
+    }
+
+    renamingRouteTable.value = true;
+
+    try {
+      const result = await mutateRouteTableApi(name, { action: 'rename', name: nextName });
+      delete routeTableState.tables[name];
+      routeTableState.tables[result.name] = result.table;
+      if (routeTableState.active === name) {
+        routeTableState.active = result.name;
+      }
+      applyRouteTable(result.name);
+      renameRouteTableDialogOpen.value = false;
+      onStatus(t('routeTableRenamed', { from: name, to: result.name }));
+    } catch (error) {
+      onError(error instanceof Error ? error.message : t('failedRenameRouteTable'));
+    } finally {
+      renamingRouteTable.value = false;
+    }
+  }
+
   async function deleteSelectedRouteTable(): Promise<void> {
     if (!selectedRouteTable.value) {
       return;
@@ -218,11 +259,16 @@ export function useRouteTableEditorState({
     activatingRouteTable,
     addRoutesToTable,
     applyRouteTable,
+    closeRenameRouteTableDialog,
     deleteSelectedRouteTable,
     deletingRouteTable,
     moveRouteInTable,
+    openRenameRouteTableDialog,
     reconcileRouteTableSelection,
     removeRouteFromTable,
+    renameRouteTableDialogOpen,
+    renameSelectedRouteTable,
+    renamingRouteTable,
     resetRouteTableForm,
     routeTableName,
     saveRouteTable,

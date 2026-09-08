@@ -2,6 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import {
   deleteProvider as deleteProviderApi,
   deleteRoute as deleteRouteApi,
+  renameRoute as renameRouteApi,
   saveProvider as saveProviderApi,
   saveRoute as saveRouteApi,
 } from '../api';
@@ -32,6 +33,8 @@ export function useProviderRuleEditor({
   const routeEditorOpen = ref(false);
   const savingProvider = ref(false);
   const savingRoute = ref(false);
+  const renamingRoute = ref(false);
+  const renameRouteDialogOpen = ref(false);
   const deletingProvider = ref(false);
   const showApiKey = ref(false);
 
@@ -56,9 +59,7 @@ export function useProviderRuleEditor({
     );
   });
   const isEditingProvider = computed(() => Boolean(selectedProvider.value));
-  const isEditingRoute = computed(() => {
-    return providerRoutes.value.some((route) => route.id === routeForm.id);
-  });
+  const isEditingRoute = computed(() => Boolean(selectedRouteId.value));
 
   function applyProvider(name: string, provider: ProviderConfig): void {
     activePane.value = 'provider';
@@ -210,16 +211,56 @@ export function useProviderRuleEditor({
     }
   }
 
+  function openRenameRouteDialog(): void {
+    if (!selectedRouteId.value) {
+      return;
+    }
+
+    renameRouteDialogOpen.value = true;
+  }
+
+  function closeRenameRouteDialog(): void {
+    renameRouteDialogOpen.value = false;
+  }
+
+  async function renameSelectedRoute(newId: string): Promise<void> {
+    const id = selectedRouteId.value;
+    const nextId = newId.trim();
+    if (!id || !nextId || nextId === id) {
+      renameRouteDialogOpen.value = false;
+      return;
+    }
+
+    renamingRoute.value = true;
+
+    try {
+      const result = await renameRouteApi(activeProtocol.value, id, nextId);
+      await reload();
+      applyRoute(result.route);
+      renameRouteDialogOpen.value = false;
+      onStatus(t('ruleRenamed', { from: id, to: result.route.id }));
+    } catch (error) {
+      onError(error instanceof Error ? error.message : t('failedRenameRule'));
+    } finally {
+      renamingRoute.value = false;
+    }
+  }
+
   return {
     activeProtocol,
     applyRoute,
+    closeRenameRouteDialog,
     deleteSelectedProvider,
     deleteSelectedRoute,
     deletingProvider,
     isEditingProvider,
     isEditingRoute,
+    openRenameRouteDialog,
     providerForm,
     providerRoutes,
+    renameRouteDialogOpen,
+    renameSelectedRoute,
+    renamingRoute,
     routeEditorOpen,
     routeForm,
     saveProvider,

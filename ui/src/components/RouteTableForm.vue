@@ -11,6 +11,7 @@ defineProps<{
 
 const emit = defineEmits<{
   delete: [];
+  renameRouteTable: [];
   save: [];
   'update:routeTableName': [name: string];
 }>();
@@ -26,13 +27,25 @@ function updateRouteTableName(event: Event): void {
   <form class="route-table-form" @submit.prevent="emit('save')">
     <label>
       <span>{{ t('name') }}</span>
-      <input
-        :value="routeTableName"
-        required
-        autocomplete="off"
-        placeholder="default"
-        @input="updateRouteTableName"
-      />
+      <div class="name-field">
+        <input
+          :value="routeTableName"
+          required
+          autocomplete="off"
+          :disabled="Boolean(selectedRouteTable)"
+          placeholder="default"
+          @input="updateRouteTableName"
+        />
+        <button
+          v-if="selectedRouteTable"
+          class="ghost-button compact"
+          type="button"
+          :disabled="saving"
+          @click="emit('renameRouteTable')"
+        >
+          {{ t('rename') }}
+        </button>
+      </div>
     </label>
 
     <div class="actions">
@@ -65,6 +78,13 @@ function updateRouteTableName(event: Event): void {
   color: #425066;
   font-size: 12px;
   font-weight: 700;
+}
+
+.name-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
 }
 
 .route-table-form input {

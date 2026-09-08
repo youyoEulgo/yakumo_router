@@ -4,6 +4,7 @@ import { useRouteDragSort } from '../composables/useRouteDragSort';
 import { protocolLabel, useI18n } from '../i18n';
 import type { Protocol, RouteRule, RouteTable, RouteTableEntry } from '../types';
 import RouteRulePicker from './RouteRulePicker.vue';
+import RenameDialog from './RenameDialog.vue';
 import RouteTableForm from './RouteTableForm.vue';
 import RouteToggleRow from './RouteToggleRow.vue';
 
@@ -11,6 +12,8 @@ const props = defineProps<{
   activating: boolean;
   activeRouteTable: string | null;
   deleting: boolean;
+  renameRouteTableDialogOpen: boolean;
+  renamingRouteTable: boolean;
   routeTable: RouteTable | undefined;
   routeTableName: string;
   routes: Record<Protocol, RouteRule[]>;
@@ -22,9 +25,12 @@ const emit = defineEmits<{
   'update:routeTableName': [name: string];
   activate: [];
   addRoutes: [protocol: Protocol, ids: string[]];
+  closeRenameRouteTableDialog: [];
   delete: [];
   moveRoute: [protocol: Protocol, routeId: string, direction: -1 | 1];
+  openRenameRouteTableDialog: [];
   removeRoute: [protocol: Protocol, routeId: string];
+  renameRouteTable: [name: string];
   save: [];
   toggleRoute: [protocol: Protocol, routeId: string, enabled: boolean];
 }>();
@@ -110,6 +116,7 @@ const {
         :saving="saving"
         :selected-route-table="selectedRouteTable"
         @delete="emit('delete')"
+        @rename-route-table="emit('openRenameRouteTableDialog')"
         @save="emit('save')"
         @update:route-table-name="emit('update:routeTableName', $event)"
       />
@@ -167,6 +174,17 @@ const {
       </div>
     </div>
   </section>
+
+  <RenameDialog
+    v-if="renameRouteTableDialogOpen"
+    :current-value="routeTableName"
+    :label="t('newName')"
+    :note="t('renameRouteTableNote', { name: routeTableName })"
+    :saving="renamingRouteTable"
+    :title="t('renameRouteTable')"
+    @cancel="emit('closeRenameRouteTableDialog')"
+    @confirm="(name) => emit('renameRouteTable', name)"
+  />
 </template>
 
 <style scoped>

@@ -11,6 +11,7 @@ defineProps<{
 
 const emit = defineEmits<{
   deleteRoute: [];
+  renameRoute: [];
   saveRoute: [];
   updateRouteField: [field: keyof RouteRule, value: boolean | string];
 }>();
@@ -34,13 +35,25 @@ function updateForwardOnly(event: Event): void {
   <form class="form-grid" @submit.prevent="emit('saveRoute')">
     <label>
       <span>ID</span>
-      <input
-        :value="routeForm.id"
-        required
-        autocomplete="off"
-        placeholder="openai-gpt"
-        @input="updateRouteTextField('id', $event)"
-      />
+      <div class="id-field">
+        <input
+          :value="routeForm.id"
+          required
+          autocomplete="off"
+          :disabled="isEditingRoute"
+          placeholder="openai-gpt"
+          @input="updateRouteTextField('id', $event)"
+        />
+        <button
+          v-if="isEditingRoute"
+          class="ghost-button compact"
+          type="button"
+          :disabled="savingRoute"
+          @click="emit('renameRoute')"
+        >
+          {{ t('rename') }}
+        </button>
+      </div>
     </label>
 
     <label>
@@ -110,6 +123,13 @@ function updateForwardOnly(event: Event): void {
   color: #425066;
   font-size: 12px;
   font-weight: 700;
+}
+
+.id-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
 }
 
 .form-grid input,

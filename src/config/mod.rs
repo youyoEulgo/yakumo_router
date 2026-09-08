@@ -3,8 +3,9 @@ mod schema;
 mod storage;
 
 pub use mutations::{
-    add_route_table_entries, delete_provider, delete_route, delete_route_from_tables,
-    remove_provider_route_ids, remove_route_table_entries, upsert_provider, upsert_route,
+    RenameRouteTableError, add_route_table_entries, delete_provider, delete_route,
+    delete_route_from_tables, remove_provider_route_ids, remove_route_table_entries,
+    rename_route_in_tables, rename_route_table, upsert_provider, upsert_route,
 };
 pub use schema::{
     AppConfig, MatchType, Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable,

@@ -17,6 +17,8 @@ const {
   activeProtocol,
   addRoutesToTable,
   configExists,
+  closeRenameRouteDialog,
+  closeRenameRouteTableDialog,
   createConfig,
   creatingConfig,
   deleteSelectedProvider,
@@ -30,6 +32,8 @@ const {
   loadAll,
   loading,
   moveRouteInTable,
+  openRenameRouteDialog,
+  openRenameRouteTableDialog,
   providerForm,
   providerRoutes,
   providers,
@@ -62,6 +66,12 @@ const {
   updateProviderField,
   updateRouteField,
   removeRouteFromTable,
+  renameRouteDialogOpen,
+  renameRouteTableDialogOpen,
+  renameSelectedRoute,
+  renameSelectedRouteTable,
+  renamingRoute,
+  renamingRouteTable,
   resetRouteTableForm,
   applyRouteTable,
   applyRoute,
@@ -133,14 +143,19 @@ const {
             :activating="activatingRouteTable"
             :active-route-table="routeTableState.active"
             :deleting="deletingRouteTable"
+            :rename-route-table-dialog-open="renameRouteTableDialogOpen"
+            :renaming-route-table="renamingRouteTable"
             :route-table="selectedTable"
             :routes="routes"
             :saving="savingRouteTable"
             :selected-route-table="selectedRouteTable"
             @activate="activateRouteTable"
             @add-routes="addRoutesToTable"
+            @close-rename-route-table-dialog="closeRenameRouteTableDialog"
             @delete="deleteSelectedRouteTable"
+            @open-rename-route-table-dialog="openRenameRouteTableDialog"
             @remove-route="removeRouteFromTable"
+            @rename-route-table="renameSelectedRouteTable"
             @save="saveRouteTable"
             @toggle-route="toggleRouteInTable"
             @move-route="moveRouteInTable"
@@ -155,6 +170,8 @@ const {
             :is-editing-route="isEditingRoute"
             :provider-form="providerForm"
             :provider-routes="providerRoutes"
+            :rename-route-dialog-open="renameRouteDialogOpen"
+            :renaming-route="renamingRoute"
             :route-editor-open="routeEditorOpen"
             :route-form="routeForm"
             :saving-provider="savingProvider"
@@ -169,6 +186,9 @@ const {
             @select-route="applyRoute"
             @save-route="saveRoute"
             @delete-route="deleteSelectedRoute"
+            @open-rename-route-dialog="openRenameRouteDialog"
+            @close-rename-route-dialog="closeRenameRouteDialog"
+            @rename-route="renameSelectedRoute"
           />
         </div>
 

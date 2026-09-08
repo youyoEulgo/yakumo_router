@@ -1,9 +1,9 @@
 use crate::AppState;
 use crate::config::{
-    AppConfig, Protocol, ProviderConfig, RouteRule, RouteTable, RouteTableEntry,
-    add_route_table_entries, create_minimal_config, delete_provider, delete_route,
+    AppConfig, Protocol, ProviderConfig, RenameRouteTableError, RouteRule, RouteTable,
+    RouteTableEntry, add_route_table_entries, create_minimal_config, delete_provider, delete_route,
     delete_route_from_tables, remove_provider_route_ids, remove_route_table_entries,
-    upsert_provider, upsert_route,
+    rename_route_in_tables, rename_route_table, upsert_provider, upsert_route,
 };
 use crate::proxy::parse_protocol;
 use crate::ui::dto::{
@@ -223,6 +223,64 @@ pub async fn delete_route_handler(
     json_response(&result, StatusCode::OK)
 }
 
+#[derive(Deserialize)]
+struct RenameRouteRequest {
+    id: String,
+}
+
+pub async fn rename_route_handler(
+    State(state): State<Arc<AppState>>,
+    Path((protocol, id)): Path<(String, String)>,
+    req: axum::http::Request<Body>,
+) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
+    let payload: RenameRouteRequest = read_json_body(req).await?;
+    let new_id = payload.id.trim().to_string();
+    if new_id.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let protocol = parse_protocol(&protocol).ok_or(StatusCode::BAD_REQUEST)?;
+    let mut config = state.config.write().await;
+
+    let conflicts_other_protocol = match protocol {
+        Protocol::OpenAi => route_id_exists(&config.anthropic.routes, &new_id),
+        Protocol::Anthropic => route_id_exists(&config.openai.routes, &new_id),
+    };
+    if conflicts_other_protocol {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    let protocol_config = protocol.config_mut(&mut config);
+    let index = protocol_config
+        .routes
+        .iter()
+        .position(|route| route.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
+    let renamed = new_id != id;
+
+    if renamed && route_id_exists(&protocol_config.routes, &new_id) {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    if renamed {
+        protocol_config.routes[index].id = new_id.clone();
+    }
+    let route = protocol_config.routes[index].clone();
+
+    if renamed {
+        rename_route_in_tables(&mut config.route_tables, protocol, &id, &new_id);
+    }
+    save_config(&state, &config)?;
+
+    let result = UpsertRouteResult {
+        updated: true,
+        route,
+    };
+    json_response(&result, StatusCode::OK)
+}
+
 pub async fn upsert_route_table_handler(
     State(state): State<Arc<AppState>>,
     Path(name): Path<String>,
@@ -274,6 +332,9 @@ enum RouteTableMutation {
         protocol: Protocol,
         entries: Vec<RouteTableEntry>,
     },
+    Rename {
+        name: String,
+    },
 }
 
 pub async fn mutate_route_table_handler(
@@ -287,6 +348,14 @@ pub async fn mutate_route_table_handler(
     let mut config = state.config.write().await;
 
     let name = match mutation {
+        RouteTableMutation::Rename { name: new_name } => {
+            rename_route_table(&mut config, &name, &new_name).map_err(|error| match error {
+                RenameRouteTableError::InvalidName => StatusCode::BAD_REQUEST,
+                RenameRouteTableError::NotFound => StatusCode::NOT_FOUND,
+                RenameRouteTableError::Conflict => StatusCode::CONFLICT,
+            })?;
+            new_name.trim().to_string()
+        }
         RouteTableMutation::Add { protocol, ids } => {
             let known_ids = known_route_ids(&config, protocol);
             if !ids.iter().all(|id| known_ids.contains(id)) {

@@ -1,5 +1,5 @@
 use crate::config::schema::{
-    Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable, RouteTableEntry,
+    AppConfig, Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable, RouteTableEntry,
 };
 use std::collections::HashMap;
 
@@ -66,6 +66,23 @@ pub fn remove_route_table_entries(entries: &mut Vec<RouteTableEntry>, ids: &[Str
     before - entries.len()
 }
 
+/// Rewrite references after a rule id changes, keeping each entry's position and
+/// enabled flag untouched.
+pub fn rename_route_in_tables(
+    route_tables: &mut HashMap<String, RouteTable>,
+    protocol: Protocol,
+    old_id: &str,
+    new_id: &str,
+) {
+    for table in route_tables.values_mut() {
+        for entry in protocol.table_routes_mut(table).iter_mut() {
+            if entry.id == old_id {
+                entry.id = new_id.to_string();
+            }
+        }
+    }
+}
+
 pub fn upsert_provider(
     config: &mut ProtocolConfig,
     name: String,
@@ -74,13 +91,54 @@ pub fn upsert_provider(
     config.providers.insert(name, provider).is_some()
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum RenameRouteTableError {
+    InvalidName,
+    NotFound,
+    Conflict,
+}
+
+/// Rename a route table in place, moving the active pointer with it.
+pub fn rename_route_table(
+    config: &mut AppConfig,
+    old_name: &str,
+    new_name: &str,
+) -> Result<(), RenameRouteTableError> {
+    let new_name = new_name.trim();
+    if new_name.is_empty() {
+        return Err(RenameRouteTableError::InvalidName);
+    }
+    if !config.route_tables.contains_key(old_name) {
+        return Err(RenameRouteTableError::NotFound);
+    }
+    if new_name == old_name {
+        return Ok(());
+    }
+    if config.route_tables.contains_key(new_name) {
+        return Err(RenameRouteTableError::Conflict);
+    }
+
+    let table = config
+        .route_tables
+        .remove(old_name)
+        .ok_or(RenameRouteTableError::NotFound)?;
+    config.route_tables.insert(new_name.to_string(), table);
+    if config.active_route_table.as_deref() == Some(old_name) {
+        config.active_route_table = Some(new_name.to_string());
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        add_route_table_entries, delete_provider, remove_route_table_entries, upsert_route,
+        RenameRouteTableError, add_route_table_entries, delete_provider,
+        remove_route_table_entries, rename_route_in_tables, rename_route_table, upsert_route,
     };
     use crate::config::schema::{
-        MatchType, ProtocolConfig, ProviderConfig, RouteRule, RouteTableEntry,
+        AppConfig, MatchType, Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable,
+        RouteTableEntry,
     };
     use std::collections::HashMap;
 
@@ -229,5 +287,89 @@ mod tests {
         assert_eq!(removed, 1);
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].id, "route-a");
+    }
+
+    #[test]
+    fn rename_route_in_tables_rewrites_ids_in_place() {
+        let mut tables = HashMap::new();
+        tables.insert(
+            "main".to_string(),
+            RouteTable {
+                openai: vec![
+                    RouteTableEntry {
+                        id: "old".to_string(),
+                        enabled: true,
+                    },
+                    RouteTableEntry {
+                        id: "other".to_string(),
+                        enabled: false,
+                    },
+                ],
+                ..Default::default()
+            },
+        );
+
+        rename_route_in_tables(&mut tables, Protocol::OpenAi, "old", "new");
+
+        let entries = &tables.get("main").expect("table exists").openai;
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].id, "new");
+        assert!(entries[0].enabled);
+        assert_eq!(entries[1].id, "other");
+        assert!(!entries[1].enabled);
+    }
+
+    #[test]
+    fn rename_route_table_moves_table_and_active_pointer() {
+        let mut config = AppConfig::default();
+        config.route_tables.insert(
+            "old".to_string(),
+            RouteTable {
+                openai: vec![RouteTableEntry {
+                    id: "route-a".to_string(),
+                    enabled: true,
+                }],
+                ..Default::default()
+            },
+        );
+        config.active_route_table = Some("old".to_string());
+
+        rename_route_table(&mut config, "old", "new").expect("rename succeeds");
+
+        assert!(!config.route_tables.contains_key("old"));
+        let table = config
+            .route_tables
+            .get("new")
+            .expect("renamed table exists");
+        assert_eq!(table.openai.len(), 1);
+        assert_eq!(table.openai[0].id, "route-a");
+        assert!(table.openai[0].enabled);
+        assert_eq!(config.active_route_table.as_deref(), Some("new"));
+    }
+
+    #[test]
+    fn rename_route_table_rejects_conflicts_and_missing() {
+        let mut config = AppConfig::default();
+        config
+            .route_tables
+            .insert("a".to_string(), RouteTable::default());
+        config
+            .route_tables
+            .insert("b".to_string(), RouteTable::default());
+
+        assert_eq!(
+            rename_route_table(&mut config, "a", "b"),
+            Err(RenameRouteTableError::Conflict)
+        );
+        assert_eq!(
+            rename_route_table(&mut config, "missing", "c"),
+            Err(RenameRouteTableError::NotFound)
+        );
+        assert_eq!(
+            rename_route_table(&mut config, "a", "   "),
+            Err(RenameRouteTableError::InvalidName)
+        );
+        assert!(config.route_tables.contains_key("a"));
+        assert!(config.route_tables.contains_key("b"));
     }
 }

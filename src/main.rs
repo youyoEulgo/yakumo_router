@@ -12,13 +12,13 @@ use crate::ui::{
     activate_route_table_handler, create_config_handler, delete_provider_handler,
     delete_route_handler, delete_route_table_handler, get_config_status_handler,
     list_providers_handler, list_route_tables_handler, list_routes_handler,
-    mutate_route_table_handler, ui_asset_handler, ui_index_handler, upsert_provider_handler,
-    upsert_route_handler, upsert_route_table_handler,
+    mutate_route_table_handler, rename_route_handler, ui_asset_handler, ui_index_handler,
+    upsert_provider_handler, upsert_route_handler, upsert_route_table_handler,
 };
 use crate::watcher::spawn_config_watcher;
 use axum::{
     Router,
-    routing::{any, get, put},
+    routing::{any, get, post, put},
 };
 use axum_server::tls_rustls::RustlsConfig;
 use reqwest::Client;
@@ -113,6 +113,10 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
         .route(
             "/_ui/api/routes/{protocol}/{id}",
             axum::routing::delete(delete_route_handler),
+        )
+        .route(
+            "/_ui/api/routes/{protocol}/{id}/rename",
+            post(rename_route_handler),
         )
         .route("/_ui/{*path}", get(ui_asset_handler))
         .route("/{*path}", any(proxy_handler))

@@ -109,10 +109,27 @@ export async function deleteRoute(protocol: Protocol, id: string): Promise<Delet
   return readJson<DeleteRouteResult>(response, 'Rule delete');
 }
 
+export async function renameRoute(
+  protocol: Protocol,
+  id: string,
+  newId: string,
+): Promise<UpsertRouteResult> {
+  const response = await fetch(`/_ui/api/routes/${protocol}/${id}/rename`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: newId }),
+  });
+
+  return readJson<UpsertRouteResult>(response, 'Rule rename');
+}
+
 export type RouteTableMutation =
   | { protocol: Protocol; action: 'add'; ids: string[] }
   | { protocol: Protocol; action: 'remove'; ids: string[] }
-  | { protocol: Protocol; action: 'update'; entries: RouteTableEntry[] };
+  | { protocol: Protocol; action: 'update'; entries: RouteTableEntry[] }
+  | { action: 'rename'; name: string };
 
 export async function saveRouteTable(name: string, table: RouteTable): Promise<void> {
   const response = await fetch(`/_ui/api/route-tables/${name}`, {
