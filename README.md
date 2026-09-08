@@ -39,6 +39,9 @@ Pin a version with `YAKUMO_VERSION=v0.1.0`, or change the install directory with
 `YAKUMO_INSTALL_DIR=/usr/local/bin`. Set `YAKUMO_NO_MODIFY_PATH=1` to skip
 editing your shell profile; the script then prints the `PATH` line to add yourself.
 
+Re-running the command upgrades the binary in place and never overwrites an
+existing config. Check the installed version with `yakumo --version`.
+
 ## Features
 
 - OpenAI-compatible and Anthropic-compatible reverse proxying
@@ -51,7 +54,7 @@ editing your shell profile; the script then prints the `PATH` line to add yourse
 - Runtime reload for provider, API key, rule, and route-table changes
 - HTTPS when local certificate files are present, HTTP otherwise
 
-## Installation
+## Build from source
 
 Prerequisites:
 
@@ -87,42 +90,20 @@ For local development, you can run it directly with:
 cargo run
 ```
 
-## Quick Start
+## First run
 
-1. Clone the project:
-
-   ```bash
-   git clone https://github.com/youyoEulgo/yakumo_router.git
-   cd yakumo_router
-   ```
-
-2. Build the Web UI:
-
-   ```bash
-   cd ui
-   bun install
-   bun run build
-   cd ..
-   ```
-
-3. Start Yakumo Router:
-
-   ```bash
-   cargo run
-   ```
-
-4. Open the Web UI:
+1. Open the Web UI:
 
    ```text
    http://127.0.0.1:8989/_ui/
    ```
 
-5. If no config file exists yet, click **Create config**.
+2. If no config file exists yet, click **Create config**.
 
    This creates a minimal `config.toml` with only server and TLS settings.
    Until the config file exists, all other UI actions are locked.
 
-6. Add a provider in the UI.
+3. Add a provider in the UI.
 
    Example OpenAI-compatible provider:
 
@@ -132,7 +113,7 @@ cargo run
    api_key: sk-...
    ```
 
-7. Add a rule for that provider.
+4. Add a rule for that provider.
 
    Example:
 
@@ -145,9 +126,9 @@ cargo run
    forward_only: false
    ```
 
-8. Add the rule to a route table and activate that route table.
+5. Add the rule to a route table and activate that route table.
 
-9. Point your client at Yakumo Router:
+6. Point your client at Yakumo Router:
 
    ```text
    http://127.0.0.1:8989

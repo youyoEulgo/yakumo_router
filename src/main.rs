@@ -53,6 +53,10 @@ async fn main() -> Result<(), BoxError> {
     match args.as_slice() {
         [] => run_server(data_dir).await,
         [cmd] if cmd == "init" => init_config(data_dir),
+        [cmd] if cmd == "--version" || cmd == "-v" || cmd == "version" => {
+            println!("yakumo {}", env!("CARGO_PKG_VERSION"));
+            Ok(())
+        }
         [cmd] if cmd == "--help" || cmd == "-h" || cmd == "help" => {
             print_help(&data_dir);
             Ok(())
@@ -164,11 +168,12 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
 }
 
 fn print_help(data_dir: &std::path::Path) {
-    println!("Yakumo Router");
+    println!("Yakumo Router {}", env!("CARGO_PKG_VERSION"));
     println!();
     println!("Usage:");
-    println!("  yakumo init    Create config.toml template");
-    println!("  yakumo         Run proxy server");
+    println!("  yakumo             Run proxy server");
+    println!("  yakumo init        Create config.toml template");
+    println!("  yakumo --version   Print the version");
     println!();
     println!("Config directory:");
     println!("  {}", data_dir.display());

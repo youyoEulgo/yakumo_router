@@ -6,7 +6,6 @@ use crate::proxy::request::{
 };
 use crate::proxy::routing::{detect_protocol, route_request};
 use axum::{body::Body, extract::State, http::StatusCode, response::Response};
-use bytes::Bytes;
 use futures::StreamExt;
 use std::sync::Arc;
 
@@ -89,8 +88,7 @@ pub async fn proxy_handler(
     if is_stream {
         let stream = resp
             .bytes_stream()
-            .map(|result| result.map_err(|e| axum::Error::new(e)))
-            .map(|result| result.map(Bytes::from));
+            .map(|result| result.map_err(axum::Error::new));
 
         let body = Body::from_stream(stream);
         let mut response = Response::new(body);

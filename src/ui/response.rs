@@ -1,9 +1,8 @@
 use crate::AppState;
-use crate::config::AppConfig;
+use crate::config::{AppConfig, write_private_file};
 use axum::{body::Body, http::StatusCode, response::Response};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use std::fs;
 
 pub async fn read_json_body<T: DeserializeOwned>(
     req: axum::http::Request<Body>,
@@ -17,7 +16,8 @@ pub async fn read_json_body<T: DeserializeOwned>(
 pub fn save_config(state: &AppState, config: &AppConfig) -> Result<(), StatusCode> {
     let config_text =
         toml::to_string_pretty(config).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    fs::write(&state.config_path, config_text).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    write_private_file(&state.config_path, &config_text)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
 pub fn json_response<T: Serialize>(

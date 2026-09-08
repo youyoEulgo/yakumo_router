@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::net::IpAddr;
 use std::path::PathBuf;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct AppConfig {
     #[serde(default)]
     pub server: ServerConfig,
@@ -17,19 +17,6 @@ pub struct AppConfig {
     pub active_route_table: Option<String>,
     #[serde(default)]
     pub route_tables: HashMap<String, RouteTable>,
-}
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        Self {
-            server: ServerConfig::default(),
-            tls: TlsConfig::default(),
-            openai: ProtocolConfig::default(),
-            anthropic: ProtocolConfig::default(),
-            active_route_table: None,
-            route_tables: HashMap::new(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -66,20 +53,11 @@ impl Default for TlsConfig {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ProtocolConfig {
     pub providers: HashMap<String, ProviderConfig>,
     #[serde(default)]
     pub routes: Vec<RouteRule>,
-}
-
-impl Default for ProtocolConfig {
-    fn default() -> Self {
-        Self {
-            providers: HashMap::new(),
-            routes: Vec::new(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

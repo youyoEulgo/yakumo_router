@@ -120,6 +120,30 @@ pub fn load_or_default_config(config_path: &Path) -> Result<AppConfig, BoxError>
     }
 }
 
+/// Write a file that may contain secrets, restricting it to the owner on Unix.
+pub fn write_private_file(path: &Path, contents: &str) -> std::io::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::io::Write;
+        use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(path)?;
+        file.write_all(contents.as_bytes())?;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600))?;
+        Ok(())
+    }
+
+    #[cfg(not(unix))]
+    {
+        fs::write(path, contents)
+    }
+}
+
 pub fn init_config(data_dir: PathBuf) -> Result<(), BoxError> {
     fs::create_dir_all(&data_dir)?;
 
@@ -133,7 +157,7 @@ pub fn init_config(data_dir: PathBuf) -> Result<(), BoxError> {
         return Ok(());
     }
 
-    fs::write(&config_path, DEFAULT_CONFIG)?;
+    write_private_file(&config_path, DEFAULT_CONFIG)?;
     println!(
         "[{}] Created default config at {}",
         crate::ts(),
@@ -152,7 +176,7 @@ pub fn create_minimal_config(data_dir: &Path) -> Result<AppConfig, BoxError> {
     let config_path = config_path(data_dir);
     let config = AppConfig::default();
     let minimal_text = MINIMAL_CONFIG;
-    fs::write(&config_path, minimal_text)?;
+    write_private_file(&config_path, minimal_text)?;
     Ok(config)
 }
 

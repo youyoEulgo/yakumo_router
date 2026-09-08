@@ -90,4 +90,9 @@ try {
 }
 
 Write-Host "yakumo installed to $Target"
+try {
+    & $Target --version
+} catch {
+    # Ignore: older builds do not support --version.
+}
 Write-Host "Open a new terminal, then run: yakumo"

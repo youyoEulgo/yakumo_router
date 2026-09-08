@@ -13,5 +13,5 @@ pub use schema::{
 };
 pub use storage::{
     BoxError, config_path, create_minimal_config, data_dir, init_config, load_config,
-    load_or_default_config, resolve_config_path,
+    load_or_default_config, resolve_config_path, write_private_file,
 };

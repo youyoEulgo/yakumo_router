@@ -148,6 +148,7 @@ esac
 "${INSTALL_DIR}/${BIN_NAME}" init >/dev/null 2>&1 || true
 
 echo "yakumo installed to ${INSTALL_DIR}/${BIN_NAME}"
+"${INSTALL_DIR}/${BIN_NAME}" --version 2>/dev/null || true
 if [ "${already_on_path}" = "1" ]; then
   echo "Run: yakumo"
 elif [ "${skip_path_edit}" = "1" ]; then

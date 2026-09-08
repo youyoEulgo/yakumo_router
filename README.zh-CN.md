@@ -37,6 +37,8 @@ yakumo
 改安装目录。设 `YAKUMO_NO_MODIFY_PATH=1` 可以不让脚本改你的 shell 配置，它只会把该加的
 `PATH` 行打印出来让你自己加。
 
+重复运行会就地升级二进制，不会覆盖已有配置。用 `yakumo --version` 查看当前版本。
+
 ## 功能
 
 - OpenAI-compatible / Anthropic-compatible 请求反向代理
@@ -49,7 +51,7 @@ yakumo
 - provider、API key、规则和路由表变更可运行时重载
 - 检测到本地证书时使用 HTTPS，否则使用 HTTP
 
-## 安装
+## 编译安装
 
 需要：
 
@@ -84,41 +86,19 @@ target/release/yakumo
 cargo run
 ```
 
-## 快速开始
+## 首次运行
 
-1. 克隆项目：
-
-   ```bash
-   git clone https://github.com/youyoEulgo/yakumo_router.git
-   cd yakumo_router
-   ```
-
-2. 构建 Web UI：
-
-   ```bash
-   cd ui
-   bun install
-   bun run build
-   cd ..
-   ```
-
-3. 启动 Yakumo Router：
-
-   ```bash
-   cargo run
-   ```
-
-4. 打开 Web UI：
+1. 打开 Web UI：
 
    ```text
    http://127.0.0.1:8989/_ui/
    ```
 
-5. 如果还没有配置文件，点击 **创建配置文件**。
+2. 如果还没有配置文件，点击 **创建配置文件**。
 
    这会创建一个只包含 server 和 TLS 设置的最小 `config.toml`。配置文件不存在时，除了创建配置文件之外，其他 UI 操作都会锁定。
 
-6. 在 UI 里添加 provider。
+3. 在 UI 里添加 provider。
 
    OpenAI-compatible provider 示例：
 
@@ -128,7 +108,7 @@ cargo run
    api_key: sk-...
    ```
 
-7. 为这个 provider 添加规则。
+4. 为这个 provider 添加规则。
 
    示例：
 
@@ -141,9 +121,9 @@ cargo run
    forward_only: false
    ```
 
-8. 把规则加入路由表，并激活路由表。
+5. 把规则加入路由表，并激活路由表。
 
-9. 把你的客户端指向 Yakumo Router：
+6. 把你的客户端指向 Yakumo Router：
 
    ```text
    http://127.0.0.1:8989
