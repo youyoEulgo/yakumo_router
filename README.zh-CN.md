@@ -11,6 +11,32 @@ OpenAI-compatible 请求    -> OpenAI-compatible provider
 Anthropic-compatible 请求 -> Anthropic-compatible provider
 ```
 
+## 快速开始
+
+Linux / macOS：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/youyoEulgo/yakumo_router/master/scripts/install.sh | sh
+```
+
+Windows（PowerShell）：
+
+```powershell
+irm https://raw.githubusercontent.com/youyoEulgo/yakumo_router/master/scripts/install.ps1 | iex
+```
+
+脚本会自动下载对应平台的最新 release，把 `yakumo` 装到 `~/.local/bin`
+（Windows 是 `%LOCALAPPDATA%\Programs\yakumo`），加进 `PATH`，并生成默认配置。
+之后新开一个终端运行：
+
+```bash
+yakumo
+```
+
+可以用 `YAKUMO_VERSION=v0.1.0` 指定版本，或用 `YAKUMO_INSTALL_DIR=/usr/local/bin`
+改安装目录。设 `YAKUMO_NO_MODIFY_PATH=1` 可以不让脚本改你的 shell 配置，它只会把该加的
+`PATH` 行打印出来让你自己加。
+
 ## 功能
 
 - OpenAI-compatible / Anthropic-compatible 请求反向代理

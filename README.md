@@ -13,6 +13,32 @@ OpenAI-compatible request    -> OpenAI-compatible provider
 Anthropic-compatible request -> Anthropic-compatible provider
 ```
 
+## Quick start
+
+Linux and macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/youyoEulgo/yakumo_router/master/scripts/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/youyoEulgo/yakumo_router/master/scripts/install.ps1 | iex
+```
+
+The script downloads the latest release for your platform, installs `yakumo`
+into `~/.local/bin` (`%LOCALAPPDATA%\Programs\yakumo` on Windows), adds it to
+your `PATH`, and creates a default config. Open a new terminal afterwards and run:
+
+```bash
+yakumo
+```
+
+Pin a version with `YAKUMO_VERSION=v0.1.0`, or change the install directory with
+`YAKUMO_INSTALL_DIR=/usr/local/bin`. Set `YAKUMO_NO_MODIFY_PATH=1` to skip
+editing your shell profile; the script then prints the `PATH` line to add yourself.
+
 ## Features
 
 - OpenAI-compatible and Anthropic-compatible reverse proxying
