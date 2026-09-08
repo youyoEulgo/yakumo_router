@@ -107,6 +107,10 @@ const messages: Record<Locale, Messages> = {
     selectProviderForRules: 'Select a provider to edit rules.',
     showApiKey: 'Show API key',
     tables: 'Tables',
+    theme: 'Theme',
+    themeAuto: 'System',
+    themeDark: 'Dark',
+    themeLight: 'Light',
     upstreamModel: 'Upstream Model',
   },
   zh: {
@@ -207,6 +211,10 @@ const messages: Record<Locale, Messages> = {
     selectProviderForRules: '选择一个 provider 后编辑规则。',
     showApiKey: '显示 API key',
     tables: '路由表',
+    theme: '主题',
+    themeAuto: '跟随系统',
+    themeDark: '深色',
+    themeLight: '浅色',
     upstreamModel: '上游模型',
   },
 };

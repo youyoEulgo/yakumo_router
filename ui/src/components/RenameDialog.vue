@@ -65,7 +65,7 @@ function submit(): void {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.42);
+  background: var(--backdrop);
 }
 
 .dialog-card {

@@ -127,7 +127,7 @@ function onRouteToggle(event: Event): void {
   height: 3px;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(39, 100, 216, 0.12);
+  box-shadow: 0 0 0 3px var(--focus-ring);
   content: '';
 }
 
@@ -184,7 +184,6 @@ function onRouteToggle(event: Event): void {
   height: 24px;
   border-radius: 999px;
   background: var(--switch-track);
-  box-shadow: inset 0 1px 2px rgba(18, 24, 38, 0.12);
   transition: background-color 0.16s ease;
 }
 
@@ -196,7 +195,6 @@ function onRouteToggle(event: Event): void {
   height: 18px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgba(18, 24, 38, 0.28);
   content: '';
   transition: transform 0.16s ease;
 }

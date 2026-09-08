@@ -133,8 +133,7 @@ function routeTableRuleCount(name: string, protocol: Protocol): string {
   gap: 14px;
   padding: 20px;
   border-right: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(243, 247, 251, 0.84)), var(--surface);
+  background: var(--surface);
 }
 
 @media (max-width: 900px) {

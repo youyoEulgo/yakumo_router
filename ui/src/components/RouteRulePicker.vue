@@ -84,7 +84,7 @@ function submit(): void {
   padding: 12px;
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
-  background: rgba(247, 250, 254, 0.72);
+  background: var(--picker-bg);
 }
 
 .rule-picker-row {

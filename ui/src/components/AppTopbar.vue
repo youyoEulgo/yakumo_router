@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import type { Locale } from '../i18n';
+import type { Theme } from '../theme';
 
 defineProps<{
   activeRouteTable: string | null;
   currentLocale: Locale;
+  currentTheme: Theme;
   disabled: boolean;
   languageLabel: string;
   localeOptions: { label: string; value: Locale }[];
@@ -18,6 +20,8 @@ defineProps<{
     rules: string;
     tables: string;
   };
+  themeLabel: string;
+  themeOptions: { label: string; value: Theme }[];
   totalProviders: number;
   totalRoutes: number;
   totalRouteTables: number;
@@ -26,6 +30,7 @@ defineProps<{
 
 const emit = defineEmits<{
   changeLocale: [locale: Locale];
+  changeTheme: [theme: Theme];
   refresh: [];
 }>();
 </script>
@@ -40,7 +45,7 @@ const emit = defineEmits<{
       </div>
     </div>
     <div class="topbar-actions">
-      <label class="language-select">
+      <label class="topbar-select">
         <span>{{ languageLabel }}</span>
         <select
           :value="currentLocale"
@@ -49,6 +54,19 @@ const emit = defineEmits<{
           @change="emit('changeLocale', ($event.target as HTMLSelectElement).value as Locale)"
         >
           <option v-for="option in localeOptions" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </label>
+      <label class="topbar-select">
+        <span>{{ themeLabel }}</span>
+        <select
+          :value="currentTheme"
+          :aria-label="themeLabel"
+          :disabled="disabled"
+          @change="emit('changeTheme', ($event.target as HTMLSelectElement).value as Theme)"
+        >
+          <option v-for="option in themeOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
         </select>
@@ -131,8 +149,8 @@ const emit = defineEmits<{
   gap: 24px;
   min-height: 84px;
   padding: 20px 32px;
-  border-bottom: 1px solid rgba(195, 204, 217, 0.82);
-  background: rgba(255, 255, 255, 0.78);
+  border-bottom: 1px solid var(--topbar-border);
+  background: var(--topbar-bg);
   backdrop-filter: blur(14px);
 }
 
@@ -147,7 +165,7 @@ const emit = defineEmits<{
 .topbar-actions,
 .topbar-stats,
 .stat-pill,
-.language-select {
+.topbar-select {
   display: flex;
   align-items: center;
 }
@@ -169,20 +187,19 @@ const emit = defineEmits<{
   gap: 8px;
 }
 
-.language-select {
+.topbar-select {
   gap: 8px;
   color: var(--text-muted);
   font-size: 12px;
 }
 
-.language-select select {
+.topbar-select select {
   min-height: 34px;
   padding: 0 30px 0 10px;
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: var(--shadow-sm);
+  background: var(--pill-bg);
 }
 
 .app-mark {
@@ -191,7 +208,6 @@ const emit = defineEmits<{
   flex: 0 0 auto;
   border-radius: var(--radius);
   object-fit: cover;
-  box-shadow: 0 1px 2px rgba(18, 24, 38, 0.14);
 }
 
 .stat-pill {
@@ -201,8 +217,7 @@ const emit = defineEmits<{
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: var(--shadow-sm);
+  background: var(--pill-bg);
   font-size: 12px;
   line-height: 1;
 }

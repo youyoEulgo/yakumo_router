@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import AppTopbar from './components/AppTopbar.vue';
 import MissingConfigPanel from './components/MissingConfigPanel.vue';
 import ProviderEditor from './components/ProviderEditor.vue';
@@ -7,8 +8,16 @@ import SidebarNav from './components/SidebarNav.vue';
 import StatusBar from './components/StatusBar.vue';
 import { useRouterConfigEditor } from './composables/useRouterConfigEditor';
 import { useI18n } from './i18n';
+import { useTheme } from './theme';
 
 const { locale, localeOptions, setLocale, t } = useI18n();
+const { theme, setTheme } = useTheme();
+
+const themeOptions = computed(() => [
+  { label: t('themeLight'), value: 'light' as const },
+  { label: t('themeDark'), value: 'dark' as const },
+  { label: t('themeAuto'), value: 'auto' as const },
+]);
 
 const {
   activateRouteTable,
@@ -88,6 +97,7 @@ const {
     <AppTopbar
       :active-route-table="routeTableState.active"
       :current-locale="locale"
+      :current-theme="theme"
       :disabled="!configExists"
       :language-label="t('language')"
       :locale-options="localeOptions"
@@ -106,7 +116,10 @@ const {
       :total-routes="totalRoutes"
       :total-route-tables="totalRouteTables"
       :topbar-context="topbarContext"
+      :theme-label="t('theme')"
+      :theme-options="themeOptions"
       @change-locale="setLocale"
+      @change-theme="setTheme"
       @refresh="loadAll"
     />
 

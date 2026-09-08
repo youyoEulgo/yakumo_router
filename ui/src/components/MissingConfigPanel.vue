@@ -36,7 +36,6 @@ const emit = defineEmits<{
   border: 1px solid var(--accent-border);
   border-radius: var(--radius);
   background: var(--accent-soft);
-  box-shadow: var(--shadow-sm);
 }
 
 .missing-config-panel h2,

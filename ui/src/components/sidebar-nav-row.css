@@ -3,22 +3,19 @@
 }
 
 .nav-row.active {
-  border-color: var(--accent-border);
-  background:
-    linear-gradient(180deg, rgba(237, 244, 255, 0.98), rgba(247, 250, 255, 0.96)),
-    var(--accent-soft);
-  box-shadow:
-    inset 4px 0 0 var(--accent),
-    0 0 0 1px rgba(39, 100, 216, 0.08),
-    var(--shadow-sm);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
-.nav-row.active.selected {
-  border-color: var(--accent);
-  box-shadow:
-    inset 4px 0 0 var(--accent),
-    0 0 0 1px rgba(39, 100, 216, 0.14),
-    var(--shadow-md);
+.nav-row.active::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  border-radius: var(--radius) 0 0 var(--radius);
+  background: var(--accent);
+  content: '';
 }
 
 .nav-row-name {
