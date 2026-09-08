@@ -41,13 +41,13 @@ detect_target() {
 }
 
 fetch_binary() {
-  dir="$1"
   target=$(detect_target)
   version="${YAKUMO_VERSION:-}"
 
   if [ -z "${version}" ]; then
     version=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
-      sed -n 's/.*"tag_name" *: *"\([^"]*\)".*/\1/p')
+      grep -m1 '"tag_name"' |
+      sed -E 's/.*"tag_name" *: *"([^"]+)".*/\1/')
   fi
 
   if [ -z "${version}" ]; then
@@ -57,15 +57,17 @@ fetch_binary() {
 
   asset="${BIN_NAME}-${version}-${target}.tar.gz"
   url="https://github.com/${REPO}/releases/download/${version}/${asset}"
+  tmp_dir=$(mktemp -d)
+  trap 'rm -rf "${tmp_dir}"' EXIT
 
   echo "Downloading ${asset} ..." >&2
-  if ! curl -fsSL "${url}" -o "${dir}/${asset}"; then
+  if ! curl -fsSL "${url}" -o "${tmp_dir}/${asset}"; then
     echo "error: failed to download ${url}" >&2
     exit 1
   fi
 
-  tar -xzf "${dir}/${asset}" -C "${dir}"
-  found=$(find "${dir}" -type f -name "${BIN_NAME}" | head -n 1)
+  tar -xzf "${tmp_dir}/${asset}" -C "${tmp_dir}"
+  found=$(find "${tmp_dir}" -type f -name "${BIN_NAME}" | head -n 1)
   if [ -z "${found}" ]; then
     echo "error: ${BIN_NAME} not found inside ${asset}" >&2
     exit 1
@@ -74,19 +76,10 @@ fetch_binary() {
   printf '%s\n' "${found}"
 }
 
-TMP_DIR=""
-cleanup() {
-  if [ -n "${TMP_DIR}" ]; then
-    rm -rf "${TMP_DIR}"
-  fi
-}
-trap cleanup EXIT
-
 if [ -f "${LOCAL_SOURCE}" ]; then
   SOURCE="${LOCAL_SOURCE}"
 else
-  TMP_DIR=$(mktemp -d)
-  SOURCE=$(fetch_binary "${TMP_DIR}")
+  SOURCE=$(fetch_binary)
 fi
 
 INSTALL_DIR="${YAKUMO_INSTALL_DIR:-${XDG_BIN_HOME:-${HOME}/.local/bin}}"
