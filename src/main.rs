@@ -12,8 +12,8 @@ use crate::ui::{
     activate_route_table_handler, create_config_handler, delete_provider_handler,
     delete_route_handler, delete_route_table_handler, get_config_status_handler,
     list_providers_handler, list_route_tables_handler, list_routes_handler,
-    mutate_route_table_handler, rename_route_handler, ui_asset_handler, ui_index_handler,
-    upsert_provider_handler, upsert_route_handler, upsert_route_table_handler,
+    mutate_route_table_handler, rename_provider_handler, rename_route_handler, ui_asset_handler,
+    ui_index_handler, upsert_provider_handler, upsert_route_handler, upsert_route_table_handler,
 };
 use crate::watcher::spawn_config_watcher;
 use axum::{
@@ -92,6 +92,10 @@ async fn run_server(data_dir: PathBuf) -> Result<(), BoxError> {
         .route(
             "/_ui/api/providers/{protocol}/{name}",
             put(upsert_provider_handler).delete(delete_provider_handler),
+        )
+        .route(
+            "/_ui/api/providers/{protocol}/{name}/rename",
+            post(rename_provider_handler),
         )
         .route("/_ui/api/route-tables", get(list_route_tables_handler))
         .route(

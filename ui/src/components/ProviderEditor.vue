@@ -17,7 +17,9 @@ defineProps<{
     api_key: string;
   };
   providerRoutes: RouteRule[];
+  renameProviderDialogOpen: boolean;
   renameRouteDialogOpen: boolean;
+  renamingProvider: boolean;
   renamingRoute: boolean;
   routeEditorOpen: boolean;
   routeForm: RouteRule;
@@ -40,6 +42,9 @@ const emit = defineEmits<{
   selectRoute: [route: RouteRule];
   saveRoute: [];
   deleteRoute: [];
+  openRenameProviderDialog: [];
+  closeRenameProviderDialog: [];
+  renameProvider: [name: string];
   openRenameRouteDialog: [];
   closeRenameRouteDialog: [];
   renameRoute: [id: string];
@@ -65,6 +70,7 @@ const emit = defineEmits<{
       :saving-provider="savingProvider"
       @save-provider="emit('saveProvider')"
       @delete-provider="emit('deleteProvider')"
+      @rename-provider="emit('openRenameProviderDialog')"
       @update-provider-field="(field, value) => emit('updateProviderField', field, value)"
     />
   </section>
@@ -130,6 +136,17 @@ const emit = defineEmits<{
       />
     </div>
   </section>
+
+  <RenameDialog
+    v-if="renameProviderDialogOpen"
+    :current-value="providerForm.name"
+    :label="t('newName')"
+    :note="t('renameProviderNote', { name: providerForm.name })"
+    :saving="renamingProvider"
+    :title="t('renameProvider')"
+    @cancel="emit('closeRenameProviderDialog')"
+    @confirm="(name) => emit('renameProvider', name)"
+  />
 
   <RenameDialog
     v-if="renameRouteDialogOpen"

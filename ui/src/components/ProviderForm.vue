@@ -18,6 +18,7 @@ const { t } = useI18n();
 
 const emit = defineEmits<{
   deleteProvider: [];
+  renameProvider: [];
   saveProvider: [];
   updateProviderField: [field: 'name' | 'base_url' | 'api_key', value: string];
 }>();
@@ -31,13 +32,25 @@ function updateProviderField(field: 'name' | 'base_url' | 'api_key', event: Even
   <form class="form-grid" @submit.prevent="emit('saveProvider')">
     <label>
       <span>{{ t('name') }}</span>
-      <input
-        :value="providerForm.name"
-        required
-        autocomplete="off"
-        placeholder="openrouter"
-        @input="updateProviderField('name', $event)"
-      />
+      <div class="field-row">
+        <input
+          :value="providerForm.name"
+          required
+          autocomplete="off"
+          :disabled="isEditingProvider"
+          placeholder="openrouter"
+          @input="updateProviderField('name', $event)"
+        />
+        <button
+          v-if="isEditingProvider"
+          class="ghost-button compact"
+          type="button"
+          :disabled="savingProvider"
+          @click="emit('renameProvider')"
+        >
+          {{ t('rename') }}
+        </button>
+      </div>
     </label>
 
     <label>

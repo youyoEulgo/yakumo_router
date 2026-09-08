@@ -17,6 +17,7 @@ const {
   activeProtocol,
   addRoutesToTable,
   configExists,
+  closeRenameProviderDialog,
   closeRenameRouteDialog,
   closeRenameRouteTableDialog,
   createConfig,
@@ -32,6 +33,7 @@ const {
   loadAll,
   loading,
   moveRouteInTable,
+  openRenameProviderDialog,
   openRenameRouteDialog,
   openRenameRouteTableDialog,
   providerForm,
@@ -66,10 +68,13 @@ const {
   updateProviderField,
   updateRouteField,
   removeRouteFromTable,
+  renameProviderDialogOpen,
   renameRouteDialogOpen,
   renameRouteTableDialogOpen,
+  renameSelectedProvider,
   renameSelectedRoute,
   renameSelectedRouteTable,
+  renamingProvider,
   renamingRoute,
   renamingRouteTable,
   resetRouteTableForm,
@@ -170,7 +175,9 @@ const {
             :is-editing-route="isEditingRoute"
             :provider-form="providerForm"
             :provider-routes="providerRoutes"
+            :rename-provider-dialog-open="renameProviderDialogOpen"
             :rename-route-dialog-open="renameRouteDialogOpen"
+            :renaming-provider="renamingProvider"
             :renaming-route="renamingRoute"
             :route-editor-open="routeEditorOpen"
             :route-form="routeForm"
@@ -186,6 +193,9 @@ const {
             @select-route="applyRoute"
             @save-route="saveRoute"
             @delete-route="deleteSelectedRoute"
+            @open-rename-provider-dialog="openRenameProviderDialog"
+            @close-rename-provider-dialog="closeRenameProviderDialog"
+            @rename-provider="renameSelectedProvider"
             @open-rename-route-dialog="openRenameRouteDialog"
             @close-rename-route-dialog="closeRenameRouteDialog"
             @rename-route="renameSelectedRoute"

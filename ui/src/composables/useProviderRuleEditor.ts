@@ -2,6 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import {
   deleteProvider as deleteProviderApi,
   deleteRoute as deleteRouteApi,
+  renameProvider as renameProviderApi,
   renameRoute as renameRouteApi,
   saveProvider as saveProviderApi,
   saveRoute as saveRouteApi,
@@ -33,6 +34,8 @@ export function useProviderRuleEditor({
   const routeEditorOpen = ref(false);
   const savingProvider = ref(false);
   const savingRoute = ref(false);
+  const renamingProvider = ref(false);
+  const renameProviderDialogOpen = ref(false);
   const renamingRoute = ref(false);
   const renameRouteDialogOpen = ref(false);
   const deletingProvider = ref(false);
@@ -246,20 +249,60 @@ export function useProviderRuleEditor({
     }
   }
 
+  function openRenameProviderDialog(): void {
+    if (!selectedProvider.value) {
+      return;
+    }
+
+    renameProviderDialogOpen.value = true;
+  }
+
+  function closeRenameProviderDialog(): void {
+    renameProviderDialogOpen.value = false;
+  }
+
+  async function renameSelectedProvider(newName: string): Promise<void> {
+    const name = selectedProvider.value;
+    const nextName = newName.trim();
+    if (!name || !nextName || nextName === name) {
+      renameProviderDialogOpen.value = false;
+      return;
+    }
+
+    renamingProvider.value = true;
+
+    try {
+      const result = await renameProviderApi(activeProtocol.value, name, nextName);
+      await reload();
+      applyProvider(result.name, result.provider);
+      renameProviderDialogOpen.value = false;
+      onStatus(t('providerRenamed', { from: name, to: result.name }));
+    } catch (error) {
+      onError(error instanceof Error ? error.message : t('failedRenameProvider'));
+    } finally {
+      renamingProvider.value = false;
+    }
+  }
+
   return {
     activeProtocol,
     applyRoute,
+    closeRenameProviderDialog,
     closeRenameRouteDialog,
     deleteSelectedProvider,
     deleteSelectedRoute,
     deletingProvider,
     isEditingProvider,
     isEditingRoute,
+    openRenameProviderDialog,
     openRenameRouteDialog,
     providerForm,
     providerRoutes,
+    renameProviderDialogOpen,
     renameRouteDialogOpen,
+    renameSelectedProvider,
     renameSelectedRoute,
+    renamingProvider,
     renamingRoute,
     routeEditorOpen,
     routeForm,

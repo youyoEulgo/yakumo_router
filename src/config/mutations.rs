@@ -92,6 +92,47 @@ pub fn upsert_provider(
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub enum RenameProviderError {
+    InvalidName,
+    NotFound,
+    Conflict,
+}
+
+/// Rename a provider in place and repoint the routes that reference it.
+pub fn rename_provider(
+    config: &mut ProtocolConfig,
+    old_name: &str,
+    new_name: &str,
+) -> Result<(), RenameProviderError> {
+    let new_name = new_name.trim();
+    if new_name.is_empty() {
+        return Err(RenameProviderError::InvalidName);
+    }
+    if !config.providers.contains_key(old_name) {
+        return Err(RenameProviderError::NotFound);
+    }
+    if new_name == old_name {
+        return Ok(());
+    }
+    if config.providers.contains_key(new_name) {
+        return Err(RenameProviderError::Conflict);
+    }
+
+    let provider = config
+        .providers
+        .remove(old_name)
+        .ok_or(RenameProviderError::NotFound)?;
+    config.providers.insert(new_name.to_string(), provider);
+    for route in &mut config.routes {
+        if route.provider == old_name {
+            route.provider = new_name.to_string();
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum RenameRouteTableError {
     InvalidName,
     NotFound,
@@ -133,8 +174,9 @@ pub fn rename_route_table(
 #[cfg(test)]
 mod tests {
     use super::{
-        RenameRouteTableError, add_route_table_entries, delete_provider,
-        remove_route_table_entries, rename_route_in_tables, rename_route_table, upsert_route,
+        RenameProviderError, RenameRouteTableError, add_route_table_entries, delete_provider,
+        remove_route_table_entries, rename_provider, rename_route_in_tables, rename_route_table,
+        upsert_route,
     };
     use crate::config::schema::{
         AppConfig, MatchType, Protocol, ProtocolConfig, ProviderConfig, RouteRule, RouteTable,
@@ -371,5 +413,80 @@ mod tests {
         );
         assert!(config.route_tables.contains_key("a"));
         assert!(config.route_tables.contains_key("b"));
+    }
+
+    #[test]
+    fn rename_provider_moves_routes_to_the_new_name() {
+        let mut providers = HashMap::new();
+        providers.insert(
+            "old".to_string(),
+            ProviderConfig {
+                base_url: "https://example.com/v1".to_string(),
+                api_key: "key".to_string(),
+            },
+        );
+        let mut config = ProtocolConfig {
+            providers,
+            routes: vec![
+                route_with_provider("route-a", "old"),
+                route_with_provider("route-b", "other"),
+            ],
+        };
+
+        rename_provider(&mut config, "old", "new").expect("rename succeeds");
+
+        assert!(!config.providers.contains_key("old"));
+        assert!(config.providers.contains_key("new"));
+        assert_eq!(config.routes[0].provider, "new");
+        assert_eq!(config.routes[1].provider, "other");
+    }
+
+    #[test]
+    fn rename_provider_rejects_conflicts_and_missing() {
+        let mut providers = HashMap::new();
+        providers.insert(
+            "a".to_string(),
+            ProviderConfig {
+                base_url: "https://example.com/v1".to_string(),
+                api_key: "key".to_string(),
+            },
+        );
+        providers.insert(
+            "b".to_string(),
+            ProviderConfig {
+                base_url: "https://example.com/v1".to_string(),
+                api_key: "key".to_string(),
+            },
+        );
+        let mut config = ProtocolConfig {
+            providers,
+            routes: Vec::new(),
+        };
+
+        assert_eq!(
+            rename_provider(&mut config, "a", "b"),
+            Err(RenameProviderError::Conflict)
+        );
+        assert_eq!(
+            rename_provider(&mut config, "missing", "c"),
+            Err(RenameProviderError::NotFound)
+        );
+        assert_eq!(
+            rename_provider(&mut config, "a", "   "),
+            Err(RenameProviderError::InvalidName)
+        );
+        assert!(config.providers.contains_key("a"));
+        assert!(config.providers.contains_key("b"));
+    }
+
+    fn route_with_provider(id: &str, provider: &str) -> RouteRule {
+        RouteRule {
+            id: id.to_string(),
+            matcher: id.to_string(),
+            match_type: MatchType::Contains,
+            provider: provider.to_string(),
+            model: "model".to_string(),
+            forward_only: false,
+        }
     }
 }

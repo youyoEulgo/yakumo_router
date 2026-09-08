@@ -1,9 +1,9 @@
 use crate::AppState;
 use crate::config::{
-    AppConfig, Protocol, ProviderConfig, RenameRouteTableError, RouteRule, RouteTable,
-    RouteTableEntry, add_route_table_entries, create_minimal_config, delete_provider, delete_route,
-    delete_route_from_tables, remove_provider_route_ids, remove_route_table_entries,
-    rename_route_in_tables, rename_route_table, upsert_provider, upsert_route,
+    AppConfig, Protocol, ProviderConfig, RenameProviderError, RenameRouteTableError, RouteRule,
+    RouteTable, RouteTableEntry, add_route_table_entries, create_minimal_config, delete_provider,
+    delete_route, delete_route_from_tables, remove_provider_route_ids, remove_route_table_entries,
+    rename_provider, rename_route_in_tables, rename_route_table, upsert_provider, upsert_route,
 };
 use crate::proxy::parse_protocol;
 use crate::ui::dto::{
@@ -138,6 +138,49 @@ pub async fn upsert_provider_handler(
     let result = UpsertProviderResult {
         updated,
         name,
+        provider,
+    };
+    json_response(&result, StatusCode::OK)
+}
+
+#[derive(Deserialize)]
+struct RenameProviderRequest {
+    name: String,
+}
+
+pub async fn rename_provider_handler(
+    State(state): State<Arc<AppState>>,
+    Path((protocol, name)): Path<(String, String)>,
+    req: axum::http::Request<Body>,
+) -> Result<Response<Body>, StatusCode> {
+    ensure_config_file_exists(&state)?;
+
+    let payload: RenameProviderRequest = read_json_body(req).await?;
+    let new_name = payload.name.trim().to_string();
+    if new_name.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    let protocol = parse_protocol(&protocol).ok_or(StatusCode::BAD_REQUEST)?;
+    let mut config = state.config.write().await;
+    let protocol_config = protocol.config_mut(&mut config);
+
+    rename_provider(protocol_config, &name, &new_name).map_err(|error| match error {
+        RenameProviderError::InvalidName => StatusCode::BAD_REQUEST,
+        RenameProviderError::NotFound => StatusCode::NOT_FOUND,
+        RenameProviderError::Conflict => StatusCode::CONFLICT,
+    })?;
+
+    let provider = protocol_config
+        .providers
+        .get(&new_name)
+        .cloned()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+    save_config(&state, &config)?;
+
+    let result = UpsertProviderResult {
+        updated: true,
+        name: new_name,
         provider,
     };
     json_response(&result, StatusCode::OK)

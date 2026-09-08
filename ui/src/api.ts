@@ -78,6 +78,22 @@ export async function saveProvider(
   return readJson<UpsertProviderResult>(response, 'Provider save');
 }
 
+export async function renameProvider(
+  protocol: Protocol,
+  name: string,
+  newName: string,
+): Promise<UpsertProviderResult> {
+  const response = await fetch(`/_ui/api/providers/${protocol}/${name}/rename`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name: newName }),
+  });
+
+  return readJson<UpsertProviderResult>(response, 'Provider rename');
+}
+
 export async function deleteProvider(
   protocol: Protocol,
   name: string,
